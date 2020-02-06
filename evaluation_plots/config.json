@@ -1,0 +1,141 @@
+{
+ "skip_existing": true,
+ "data_path_processed_ref": "/g/data1/er4/exv563/hydro_projections/data/evaluation/AWAP",
+ "data_path_processed_sim": "/g/data1/er4/exv563/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs",
+ "path_daily_ref": "/g/data1/er4/data/CLIMATE",
+ "path_daily_sim": "/g/data1/er4/HYDROPROJ/ISIMIP_data/processed",
+ "plot_path": "/g/data1/er4/exv563/hydro_projections/plots/data_evaluation/ISIMIP_AWAP/climate_inputs",
+ "evaluation_year_start": 1976,
+ "evaluation_year_end": 2005,
+ "name_sim_prefix": "isimip",
+ "name_ref": "awap",
+ "gcms": [
+  "CNRM-CM5",
+  "GFDL-ESM2M",
+  "MIROC5"
+ ],
+ "vars": [
+  "rain_day"
+ ],
+ "ref_vars": {
+  "rain_day": "rain_day",
+  "temp_min_day": "temp_min_day",
+  "temp_max_day": "temp_max_day",
+  "wind": "wind",
+  "solar_exposure_day": "solar_exposure_day"
+ },
+ "ref_vars_in_nc": {
+  "rain_day": "rain_day",
+  "temp_min_day": "temp_min_day",
+  "temp_max_day": "temp_max_day",
+  "wind": "wind",
+  "solar_exposure_day": "solar_exposure_day"
+ },
+ "sim_vars": {
+  "rain_day": "pr",
+  "temp_min_day": "tasmin",
+  "temp_max_day": "tasmax",
+  "wind": "sfcWind",
+  "solar_exposure_day": "rsds"
+ },
+ "sim_vars_in_nc": {
+  "rain_day": "pr",
+  "temp_min_day": "tasmin",
+  "temp_max_day": "tasmax",
+  "wind": "sfcWind",
+  "solar_exposure_day": "rsds"
+ },
+ "mask_file": "/g/data1/er4/exv563/hydro_projections/data/spatial/awra_awap_mask/awra_awap_mask.nc",
+ "mask_var_name_in_nc": "mask",
+ "region_file": "/g/data1/er4/data/outputs/verification/data/spatial/NRM_regions/NRM_super_clusters_nc/NRM_super_clusters.nc",
+ "region_var": "NRM_super_cluster",
+ "region_meta_data": "/g/data1/er4/data/outputs/verification/data/spatial/NRM_regions/NRM_super_clusters_nc/NRM_super_clusters_meta.csv",
+ "region_meta_data_id_column": "FID",
+ "region_meta_data_label_column": "label",
+ "region_codes_to_use": [
+  "AU",
+  0,
+  1,
+  2,
+  3
+ ],
+ "region_codes_to_use_spatio_temporal": [
+  0,
+  1,
+  2,
+  3
+ ],
+ "point_locations": {
+  "Melbourne": {
+   "lat": -37.769525,
+   "lon": 145.008552
+  },
+  "Sydney": {
+   "lat": -33.782566,
+   "lon": 150.942748
+  },
+  "Darwin": {
+   "lat": -12.381293,
+   "lon": 130.915446
+  },
+  "Perth": {
+   "lat": -31.793321,
+   "lon": 116.108832
+  }
+ },
+ "bias_maps_statistics": [
+  "mean",
+  "min",
+  "max",
+  "std",
+  "pctl05",
+  "pctl25",
+  "pctl50",
+  "pctl75",
+  "pctl95"
+ ],
+ "boxplots_statistics": [
+  "mean",
+  "min",
+  "max",
+  "std",
+  "pctl05",
+  "pctl25",
+  "pctl50",
+  "pctl75",
+  "pctl95"
+ ],
+ "boxplots_showfliers": false,
+ "timeseries_statistics": [
+  "mean",
+  "min",
+  "max",
+  "std",
+  "pctl05",
+  "pctl25",
+  "pctl50",
+  "pctl75",
+  "pctl95"
+ ],
+ "climatologies_statistics": [
+  "mean",
+  "min",
+  "max",
+  "std",
+  "pctl05",
+  "pctl25",
+  "pctl50",
+  "pctl75",
+  "pctl95"
+ ],
+ "animation_daily_start": "2000-01-01",
+ "animation_daily_end": "2000-01-31",
+ "animation_daily_years_read_in": [
+  2000
+ ],
+ "animation_create_ref_animations": true,
+ "fourier_time_aggregations": [
+  "daily",
+  "monthly"
+ ]
+}

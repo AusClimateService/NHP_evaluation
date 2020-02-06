@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#PBS -q normal
+#PBS -P er4
+#PBS -N isimip_outputs_GCM_VAR_TIMESCALE_STATISTIC_evaluation_scores_awra_output
+#PBS -l walltime=24:00:00
+#PBS -l ncpus=2
+#PBS -l mem=4gb
+#PBS -l wd
+#PBS -o /g/data1a/er4/exv563/hydro_projections/code/PBS_jobs/isimip_outputs_GCM_VAR_TIMESCALE_STATISTIC_evaluation_scores_awra_output.out
+#PBS -e /g/data1a/er4/exv563/hydro_projections/code/PBS_jobs/isimip_outputs_GCM_VAR_TIMESCALE_STATISTIC_evaluation_scores_awra_output.error
+##PBS -m e
+##PBS -M elisabeth.vogel@climate-energy-college.org
+
+var=VAR
+gcm=GCM
+timescale=TIMESCALE
+statistic=STATISTIC
+
+ref_start_year="1976"
+ref_end_year="2005"
+path_awra_run="/g/data1/er4/exv563/hydro_projections/data/regional_vs_national_calibration/ISIMIP/${gcm}/historical/calibration_region_national"
+path_awra_ref="/g/data1/er4/exv563/hydro_projections/data/drought_2018_analysis/awra_v6_dynamic_winds/daily" # reference simulation (AWRA v6.1 using dynamic wind, 5 spin ups)
+out_path="/g/data1a/er4/exv563/hydro_projections/data/evaluation/ISIMIP_original/awra_outputs/${gcm}"
+name_sim="isimip_${gcm}"
+name_ref="awra_v6.1"
+
+
+sh /g/data1a/er4/exv563/hydro_projections/code/postprocessing/ISIMIP_original/awra_outputs/evaluation_scores_awra_output.sh ${var} ${ref_start_year} ${ref_end_year} ${path_awra_run} ${path_awra_ref} ${out_path} ${timescale} ${statistic} ${name_sim} ${name_ref}
+
+wait
+

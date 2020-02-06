@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#PBS -q normal
+#PBS -P er4
+#PBS -N SCRIPTNAME
+#PBS -l walltime=4:00:00
+#PBS -l ncpus=CPUS
+#PBS -l mem=MEMORYgb
+#PBS -l wd
+#PBS -o PBSPATH/SCRIPTNAME.out
+#PBS -e PBSPATH/SCRIPTNAME.error
+##PBS -m e
+##PBS -M elisabeth.vogel@climate-energy-college.org
+
+# source python environment
+source /g/data/er4/miniconda3/bin/activate /g/data1/er4/exv563/conda/envs/py36
+
+# run script (the script reads in all configurations using the config.py file)
+python SCRIPTPATH/SCRIPTNAME

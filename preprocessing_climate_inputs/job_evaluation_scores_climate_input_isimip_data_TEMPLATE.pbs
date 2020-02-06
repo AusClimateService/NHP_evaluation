@@ -1,0 +1,67 @@
+#!/bin/bash
+
+#PBS -q normal
+#PBS -P er4
+#PBS -N isimip_inputs_GCM_VAR_TIMESCALE_STATISTIC_evaluation_scores_awra_output
+#PBS -l walltime=24:00:00
+#PBS -l ncpus=2
+#PBS -l mem=4gb
+#PBS -l wd
+#PBS -o /g/data1a/er4/exv563/hydro_projections/code/PBS_jobs/isimip_inputs_GCM_VAR_TIMESCALE_STATISTIC_evaluation_scores_awra_output.out
+#PBS -e /g/data1a/er4/exv563/hydro_projections/code/PBS_jobs/isimip_inputs_GCM_VAR_TIMESCALE_STATISTIC_evaluation_scores_awra_output.error
+##PBS -m e
+##PBS -M elisabeth.vogel@climate-energy-college.org
+
+var_ref=VAR
+gcm=GCM
+timescale=TIMESCALE
+statistic=STATISTIC
+
+case ${var_ref} in
+    rain_day)
+        var_sim=pr
+        unit_conv_factor=86400
+        unit_conv_add=0
+        ;;
+    solar_exposure_day)
+        var_sim=rsds
+        unit_conv_factor=0.0864
+        unit_conv_add=0
+        ;;
+    temp_max_day)
+        var_sim=tasmax
+        unit_conv_factor=1
+        unit_conv_add=-273.15
+        ;;
+    temp_min_day)
+        var_sim=tasmin
+        unit_conv_factor=1
+        unit_conv_add=-273.15
+        ;;
+    wind)
+        var_sim=sfcWind
+        unit_conv_factor=1
+        unit_conv_add=0
+        ;;
+esac
+
+# if statistic == 'std' then no additive unit conversion needed (only multiplicative)
+case ${statistic} in
+    std)    unit_conv_add=0
+        ;;
+esac
+
+ref_start_year="1976"
+ref_end_year="2005"
+path_climate_data="/g/data1/er4/HYDROPROJ/ISIMIP_data/processed/annual_files/${gcm}/historical"
+path_climate_ref="/g/data1/er4/data/CLIMATE/${var}"
+out_path="/g/data1a/er4/exv563/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs/${gcm}"
+out_path_ref="/g/data1/er4/exv563/hydro_projections/data/evaluation/AWAP"
+name_sim="isimip_${gcm}"
+name_ref="awap"
+
+
+sh /g/data1a/er4/exv563/hydro_projections/code/postprocessing/ISIMIP_AWAP/climate_inputs/evaluation_scores_climate_input.sh ${var_sim} ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_data} ${path_climate_ref} ${out_path} ${out_path_ref} ${timescale} ${statistic} ${name_sim} ${name_ref} ${unit_conv_factor} ${unit_conv_add}
+
+wait
+
