@@ -20,7 +20,7 @@ ref_start_year="1976"
 ref_end_year="2005"
 path_awra_run="/g/data/er4/exv563/hydro_projections/data/regional_vs_national_calibration/ISIMIP/${gcm}/historical/calibration_region_national"
 path_awra_ref="/g/data/er4/exv563/hydro_projections/data/drought_2018_analysis/awra_v6_dynamic_winds/daily" # reference simulation (AWRA v6.1 using dynamic wind, 5 spin ups)
-out_path="/scratch/er4/${USER}/hydro_projections/data/evalutation/awra_outputs/${gcm}"
+out_path="/scratch/er4/${USER}/hydro_projections/data/evalutation/preprocessing_awra_outputs/${gcm}"
 name_sim="isimip_${gcm}"
 name_ref="awra_v6.1"
 

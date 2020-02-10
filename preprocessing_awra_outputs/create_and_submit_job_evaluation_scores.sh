@@ -1,14 +1,13 @@
 #!/bin/bash
 
-PBS_JOBS_FOLDER=PBS_jobs
-PBS_JOB_TEMPLATE_FILE=job_evaluation_scores_awra_output_isimip_data_TEMPLATE.pbs
-
-
 VARIABLES=(sm etot qtot)
 GCMS=(GFDL-ESM2M)
 TIMESCALES=(seas)
 STATISTICS=(mean min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95)
 
+
+PBS_JOBS_FOLDER=PBS_jobs
+PBS_JOB_TEMPLATE_FILE=job_evaluation_scores_awra_output_isimip_data_TEMPLATE.pbs
 
 # Create output PBS Jobs folder if it doesn't exist
 mkdir -p ${PBS_JOBS_FOLDER}
