@@ -22,10 +22,11 @@ for var in ${VARIABLES[@]}; do
                 job_file_base_name=job_evaluation_scores_awra_output_isimip_data_${var}_${gcm}_${timescale}_${statistic}
                 job_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.pbs
                 job_name=isimip_outputs_${gcm}_${var}_${timescale}_${statistic}_evaluation_scores_awra_output
-                job_output_file=${job_file_base_name}.out
-                job_error_file=${job_file_base_name}.error
+                job_output_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.out
+                job_error_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.error
                 
                 # Create job file from template
+                echo "Creating Job ${job_file}"
                 cp ${PBS_JOB_TEMPLATE_FILE} ${job_file}
                 sed -i "s|xxVARxx|${var}|g" ${job_file}
                 sed -i "s|xxGCMxx|${gcm}|g" ${job_file}
@@ -37,6 +38,7 @@ for var in ${VARIABLES[@]}; do
                 wait
                 
                 # submit job
+                echo "Submitting Job ${job_file}"
                 qsub ${job_file}
                 wait
             done

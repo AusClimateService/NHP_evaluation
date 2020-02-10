@@ -18,14 +18,11 @@ statistic=xxSTATISTICxx
 
 ref_start_year="1976"
 ref_end_year="2005"
-path_awra_run="/g/data1/er4/exv563/hydro_projections/data/regional_vs_national_calibration/ISIMIP/${gcm}/historical/calibration_region_national"
-path_awra_ref="/g/data1/er4/exv563/hydro_projections/data/drought_2018_analysis/awra_v6_dynamic_winds/daily" # reference simulation (AWRA v6.1 using dynamic wind, 5 spin ups)
+path_awra_run="/g/data/er4/exv563/hydro_projections/data/regional_vs_national_calibration/ISIMIP/${gcm}/historical/calibration_region_national"
+path_awra_ref="/g/data/er4/exv563/hydro_projections/data/drought_2018_analysis/awra_v6_dynamic_winds/daily" # reference simulation (AWRA v6.1 using dynamic wind, 5 spin ups)
 out_path="/scratch/er4/${USER}/hydro_projections/data/evalutation/awra_outputs/${gcm}"
 name_sim="isimip_${gcm}"
 name_ref="awra_v6.1"
 
 
-sh /g/data1a/er4/exv563/hydro_projections/code/postprocessing/ISIMIP_original/awra_outputs/evaluation_scores_awra_output.sh ${var} ${ref_start_year} ${ref_end_year} ${path_awra_run} ${path_awra_ref} ${out_path} ${timescale} ${statistic} ${name_sim} ${name_ref}
-
-wait
-
+sh evaluation_scores_awra_output.sh ${var} ${ref_start_year} ${ref_end_year} ${path_awra_run} ${path_awra_ref} ${out_path} ${timescale} ${statistic} ${name_sim} ${name_ref}
