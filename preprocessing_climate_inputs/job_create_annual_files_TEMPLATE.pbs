@@ -15,9 +15,8 @@
 var=xxVARxx
 gcm=xxMODELxx
 
-#climate_path="/g/data/er4/sl4570/hydro_projections/data/isimip/historical"
 climate_path="/g/data/er4/jr6311/isimip-bias-correction/isimip-bias-correction/jobs/GCMoutput/${gcm}/AWAP"
-output_path="/scratch/er4/${USER}/hydro_projections/data/evaluation/preprocessing_climate_inputs/${gcm}/historical"
+output_path="/scratch/er4/HYDROPROJ/ISIMIP_data/processed/annual_files/${gcm}/historical"
 
 
 sh create_annual_files.sh ${var} ${climate_path} ${output_path}
