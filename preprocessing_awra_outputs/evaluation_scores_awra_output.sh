@@ -259,13 +259,7 @@ for timescale in ${timescales}; do
             if [ ${sim_ref} == "NONE" ] || [ ${sim_ref} == "" ]; then
                 continue;
             fi
-        
-            if [ ${sim_ref} == ${name_sim} ]; then
-                var=${var_sim}
-            elif [ ${sim_ref} == ${name_ref} ]; then
-                var=${var_ref}
-            fi
-        
+
             # File names for the gridded data
             fn_mean=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
             fn_std=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
@@ -278,7 +272,6 @@ for timescale in ${timescales}; do
             cdo zonmean ${fn_mean} ${fn_mean_zonal}
             cdo zonmean ${fn_std} ${fn_std_zonal}
         done
-        var='' # empty variable, just to be safe
         
         # Calculate the bias in zonal means
         
@@ -286,13 +279,13 @@ for timescale in ${timescales}; do
         if [ ${name_ref} != "NONE" ] && [ ${name_ref} != ""  ]; then
         
             echo '- calculate the bias in zonal means'
-            sim_mean=${out_path}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_mean.nc
-            ref_mean=${out_path}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_mean.nc
-            sim_std=${out_path}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_std.nc
-            ref_std=${out_path}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_std.nc
-            bias_abs=${bias_path}/bias_abs_zonal_mean_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
-            bias_rel=${bias_path}/bias_rel_zonal_mean_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
-            bias_std=${bias_path}/bias_std_rel_zonal_mean_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+            sim_mean=${out_path}/${name_sim}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_mean.nc
+            ref_mean=${out_path}/${name_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_mean.nc
+            sim_std=${out_path}/${name_sim}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_std.nc
+            ref_std=${out_path}/${name_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_zonal_std.nc
+            bias_abs=${bias_path}/bias_abs_zonal_mean_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+            bias_rel=${bias_path}/bias_rel_zonal_mean_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+            bias_std=${bias_path}/bias_std_rel_zonal_mean_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
             
             # subtract reference from simulation and then multiply with -1, so that all information from reference is retained (units, long_name etc.)
             cdo -L mulc,-1 -sub ${ref_mean} ${sim_mean} ${bias_abs}
