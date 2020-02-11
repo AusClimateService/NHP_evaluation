@@ -1,7 +1,12 @@
 #!/bin/bash
 
+# pr tasmin tasmax sfcWind rsds
 VARIABLES=(pr)
+
+ # ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5
 GCMS=(CNRM-CM5 GFDL-ESM2M MIROC5)
+
+
 
 
 PBS_JOBS_FOLDER=PBS_jobs
@@ -9,7 +14,6 @@ PBS_JOB_TEMPLATE_FILE=job_create_annual_files_TEMPLATE.pbs
 
 # Create output PBS Jobs folder if it doesn't exist
 mkdir -p ${PBS_JOBS_FOLDER}
-
 
 for var in ${VARIABLES[@]}; do
     for gcm in ${GCMS[@]}; do

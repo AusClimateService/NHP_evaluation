@@ -1,9 +1,18 @@
 #!/bin/bash
 
+# rain_day temp_max_day temp_min_day wind solar_exposure_day
 VARIABLES=(rain_day)
+
+# ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5
 GCMS=(CNRM-CM5 GFDL-ESM2M MIROC5)
+
+#year seas mon
 TIMESCALES=(year seas mon)
+
+#mean min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95
 STATISTICS=(mean min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95)
+
+
 
 
 PBS_JOBS_FOLDER=PBS_jobs
@@ -11,7 +20,6 @@ PBS_JOB_TEMPLATE_FILE=job_evaluation_scores_climate_input_isimip_data_TEMPLATE.p
 
 # Create output PBS Jobs folder if it doesn't exist
 mkdir -p ${PBS_JOBS_FOLDER}
-
 
 for var in ${VARIABLES[@]}; do
     for gcm in ${GCMS[@]}; do
