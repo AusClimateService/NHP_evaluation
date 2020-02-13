@@ -7,13 +7,12 @@
 #PBS -l ncpus=CPUS
 #PBS -l mem=MEMORYgb
 #PBS -l wd
+#PBS -l storage=gdata/er4+scratch/er4
 #PBS -o PBSPATH/SCRIPTNAME.out
 #PBS -e PBSPATH/SCRIPTNAME.error
-##PBS -m e
-##PBS -M elisabeth.vogel@climate-energy-college.org
 
 # source python environment
-source /g/data/er4/miniconda3/bin/activate /g/data1/er4/exv563/conda/envs/py36
+source /g/data/er4/miniconda3/bin/activate /g/data/er4/exv563/conda/envs/py36
 
 # run script (the script reads in all configurations using the config.py file)
 python SCRIPTPATH/SCRIPTNAME
