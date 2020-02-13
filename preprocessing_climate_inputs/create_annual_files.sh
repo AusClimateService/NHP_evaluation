@@ -3,7 +3,7 @@
 # Date: 26/03/2019
 
 # load required netcdf modules
-module load netcdf cdo nco
+module load netcdf/4.7.1p cdo/1.7.2 nco/4.7.7
 
 
 # read in variable
@@ -20,5 +20,3 @@ for file in ${files}; do
     echo ${file}
     cdo -O -z zip9 splityear ${path_climate_data}/${file} ${out_path}/${file%.nc4}_
 done
-    
-    
