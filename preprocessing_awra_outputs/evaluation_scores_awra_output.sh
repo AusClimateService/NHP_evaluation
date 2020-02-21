@@ -27,7 +27,7 @@
 # Date: 07/03/2019
 
 # load required netcdf modules
-module load netcdf/4.7.1p cdo/1.7.2 nco/4.7.7
+module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
 
 
 # read in variable
