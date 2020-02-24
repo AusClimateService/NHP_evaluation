@@ -7,7 +7,7 @@
 #PBS -l ncpus=2
 #PBS -l mem=4gb
 #PBS -l wd
-#PBS -l storage=gdata/er4+scratch/er4
+#PBS -l storage=gdata/er4+scratch/er4+gdata/wj02
 #PBS -o xxJOB_OUTPUT_FILExx
 #PBS -e xxJOB_ERROR_FILExx
 
@@ -15,7 +15,7 @@
 var=xxVARxx
 gcm=xxMODELxx
 
-climate_path="/g/data/er4/jr6311/isimip-bias-correction/isimip-bias-correction/jobs/GCMoutput/${gcm}/AWAP"
+climate_path="/g/data/wj02/COMPLIANT/HMINPUT/output/AUS-5/BoM/BoM-${gcm}/historical/r1i1p1/r240x120-ISIMIP2b-AWAP/v1/day/${var}"
 output_path="/scratch/er4/HYDROPROJ/ISIMIP_data/processed/annual_files/${gcm}/historical"
 
 
