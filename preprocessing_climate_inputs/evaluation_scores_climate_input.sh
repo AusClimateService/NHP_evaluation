@@ -184,7 +184,7 @@ for timescale in ${timescales}; do
                         fi
                         mv ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc ${fn_year}
                          
-                     fi # fn_year exists?
+                    fi # fn_year exists?
                      
                 done
 
@@ -193,7 +193,7 @@ for timescale in ${timescales}; do
                 cdo mergetime ${statistics_path}/${sim_ref}_${var}_${timescale}${statistic}_*.nc ${temp_path}/${sim_ref}_merged.nc
                 wait
                 cdo selyear,${ref_start_year}/${ref_end_year} ${temp_path}/${sim_ref}_merged.nc ${fn_merged}
-                rm ${temp_path}/${sim_ref}_merged.nc
+                rm -r ${temp_path}
                 wait
                
             fi # fn_merge exists?
@@ -218,14 +218,16 @@ for timescale in ${timescales}; do
             cdo ${cdo_fun}std ${fn_merged} ${fn_std}
             
         done # sim_ref
-        var='' # empty variable, just to be safe
-         
+
         # Calculate biases
         
         # if no simulation or reference dataset was given, skip it
         if [ ${name_ref} != "NONE" ] && [ ${name_ref} != ""  ]; then
-        
             echo 'Calculate biases'
+
+            temp_path=${out_path_ref}/temp_${var_sim}_${timescale}${statistic}_${name_sim}_${name_ref}
+            mkdir -p ${temp_path}
+
             sim_mean=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
             ref_mean=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
             sim_std=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
@@ -239,10 +241,9 @@ for timescale in ${timescales}; do
             cdo div ${bias_abs} ${ref_mean} ${bias_rel}
             cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
             cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
-            
+
+            rm -r ${temp_path}
         fi
-        
-        rm -r ${temp_path}
     done
 done
 
