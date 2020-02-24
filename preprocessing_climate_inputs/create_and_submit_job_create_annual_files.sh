@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # pr tasmin tasmax sfcWind rsds
-VARIABLES=(pr)
+VARIABLES=(pr tasmin taxmax sfcWind rsds)
 
- # ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5
-GCMS=(CNRM-CM5 GFDL-ESM2M MIROC5)
+# ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5
+GCMS=(ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5)
 
 
 
