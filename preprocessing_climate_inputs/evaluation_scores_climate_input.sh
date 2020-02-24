@@ -29,7 +29,7 @@
 
 # Author: Elisabeth Vogel, elisabeth.vogel@bom.gov.au
 # Date: 26/03/2019
-
+set -e
 # load required netcdf modules
 module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
 
