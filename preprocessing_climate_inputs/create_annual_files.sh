@@ -14,7 +14,7 @@ out_path=$3
 mkdir -p ${out_path}
 
 # prepare file names
-files=`find ${path_climate_data} -type f -name "*${var}*19600101-20051231.nc4" -exec basename {} \;`
+files=`find ${path_climate_data} -type f -name "*${var}*19600101-20051231.nc" -exec basename {} \;`
 
 for file in ${files}; do
     echo ${file}
