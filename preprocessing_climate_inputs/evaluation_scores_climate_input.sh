@@ -94,19 +94,18 @@ for timescale in ${timescales}; do
                 out_path=${out_path_ref}
             fi
             
-            # prepare paths for annual statistics
-            statistics_path=${out_path}/annual_statistics
-            mkdir -p ${statistics_path}
-            
-            # prepare temp folder
-            temp_path=${out_path}/temp_${var_sim}_${timescale}${statistic}_${name_sim}_${name_ref}
-            mkdir -p ${temp_path}
-            
             fn_merged=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
             
             cdo_fun=${timescale}${statistic}
             if [ ! -f ${fn_merged} ]; then
-            
+                # prepare paths for annual statistics
+                statistics_path=${out_path}/annual_statistics
+                mkdir -p ${statistics_path}
+
+                # prepare temp folder
+                temp_path=${out_path}/temp_${var_sim}_${timescale}${statistic}_${name_sim}_${name_ref}
+                mkdir -p ${temp_path}
+
                 # Calculate statistic for each year separately (less memory use)
                 echo 'Calculate values for each year separately (less memory use)'
                 for (( year=ref_start_year;year<=ref_end_year;year++ )); do
@@ -193,9 +192,9 @@ for timescale in ${timescales}; do
                 cdo mergetime ${statistics_path}/${sim_ref}_${var}_${timescale}${statistic}_*.nc ${temp_path}/${sim_ref}_merged.nc
                 wait
                 cdo selyear,${ref_start_year}/${ref_end_year} ${temp_path}/${sim_ref}_merged.nc ${fn_merged}
-                rm -r ${temp_path}
                 wait
-               
+                rm -r ${temp_path}
+
             fi # fn_merge exists?
 
             # Calculate overall statistics from annual statistics
@@ -241,6 +240,7 @@ for timescale in ${timescales}; do
             cdo div ${bias_abs} ${ref_mean} ${bias_rel}
             cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
             cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
+            wait
 
             rm -r ${temp_path}
         fi
