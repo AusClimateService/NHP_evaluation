@@ -7,7 +7,7 @@ VARIABLES=(sm etot qtot)
 GCMS=(GFDL-ESM2M)
 
 # year seas mon
-TIMESCALES=(seas)
+TIMESCALES=(year seas mon)
 
 # mean min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95
 STATISTICS=(mean min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95)

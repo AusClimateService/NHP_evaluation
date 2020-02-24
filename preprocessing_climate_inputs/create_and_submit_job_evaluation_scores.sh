@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # rain_day temp_max_day temp_min_day wind solar_exposure_day
-VARIABLES=(rain_day)
+VARIABLES=(rain_day temp_max_day temp_min_day wind solar_exposure_day)
 
 # ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5
 GCMS=(CNRM-CM5 GFDL-ESM2M MIROC5)
