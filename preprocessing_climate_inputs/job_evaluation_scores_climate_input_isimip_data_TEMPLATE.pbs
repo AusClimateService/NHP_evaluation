@@ -54,7 +54,7 @@ esac
 ref_start_year="1976"
 ref_end_year="2005"
 path_climate_data="/scratch/er4/HYDROPROJ/ISIMIP_data/processed/annual_files/${gcm}/historical"
-path_climate_ref="/g/data/er4/data/CLIMATE/${var}"
+path_climate_ref="/g/data/er4/data/CLIMATE"
 out_path="/scratch/er4/${USER}/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs/${gcm}"
 out_path_ref="/scratch/er4/${USER}/hydro_projections/data/evaluation/AWAP"
 name_sim="isimip_${gcm}"
