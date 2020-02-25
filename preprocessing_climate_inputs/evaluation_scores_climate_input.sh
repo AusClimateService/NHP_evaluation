@@ -104,8 +104,6 @@ for timescale in ${timescales}; do
                     echo '- ' ${year}                  
                     
                     fn_year=${statistics_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
-                    echo ${fn_year}
-
                     if [ -f ${fn_year} ]; then
                         echo '##### Statistic file already exists. Skipping ' ${fn_year}
                     else
