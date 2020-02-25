@@ -33,7 +33,8 @@
 # Set bash script to fail on first error
 set -e
 # Trap each command and log it to output (except ECHO)
-trap '[[ $BASH_COMMAND != echo* ]] && echo [$(date "+%Y%m%d %H:%M:%S")] $BASH_COMMAND' DEBUG
+trap '! [[ "$BASH_COMMAND" =~ (echo|for|\[) ]] && \
+cmd=`eval echo "$BASH_COMMAND" 2>/dev/null` && echo [$(date "+%Y%m%d %H:%M:%S")] $cmd' DEBUG
 
 
 # load required netcdf modules
@@ -56,7 +57,7 @@ name_ref=${12} # name for the historical reference, used to create file names
 unit_conv_factor=${13} # multiply the simulation unit with this conversion factor to get unit of reference dataset
 unit_conv_add=${14} # add this number to the simulation unit to get unit of reference dataset
 
-echo ${var_sim} ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_data} ${path_climate_ref} ${out_path} ${timescales} ${statistics} ${name_sim} ${name_ref} ${unit_conv_factor} ${unit_conv_add}
+echo "##### Script Ran With" ${var_sim} ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_data} ${path_climate_ref} ${out_path} ${timescales} ${statistics} ${name_sim} ${name_ref} ${unit_conv_factor} ${unit_conv_add}
 
 
 # create bias path
@@ -66,7 +67,7 @@ mkdir -p ${bias_path}
                 
 for timescale in ${timescales}; do
     for statistic in ${statistics}; do
-        echo '##### Statistic to calculate: ' ${timescale} ${statistic}
+        echo '##### Statistic to calculate:' ${timescale} ${statistic}
         
         for sim_ref in ${name_sim} ${name_ref}; do
             if [ ${sim_ref} == "NONE" ] || [ ${sim_ref} == "" ]; then
@@ -74,7 +75,7 @@ for timescale in ${timescales}; do
                 continue;
             fi
 
-            echo '##### Processing ' ${sim_ref}
+            echo '##### Processing' ${sim_ref}
 
             if [ ${sim_ref} == ${name_sim} ]; then
                 var=${var_sim}
@@ -86,9 +87,9 @@ for timescale in ${timescales}; do
             
             fn_merged=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
             if [ -f ${fn_merged} ]; then
-                echo '##### File already exists. Skipping ' ${fn_merged}
+                echo '##### Merged File already exists. Skipping' ${fn_merged}
             else
-                echo '##### Creating ' ${fn_merged}
+                echo '##### Creating Merged File' ${fn_merged}
 
                 # prepare paths for annual statistics
                 statistics_path=${out_path}/annual_statistics
@@ -105,9 +106,9 @@ for timescale in ${timescales}; do
                     
                     fn_year=${statistics_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
                     if [ -f ${fn_year} ]; then
-                        echo '##### Statistic file already exists. Skipping ' ${fn_year}
+                        echo '##### Statistic file already exists. Skipping' ${fn_year}
                     else
-                        echo '##### Creating statistic file ' ${fn_year}
+                        echo '##### Creating statistic file' ${fn_year}
                         # ADJUST THESE ACCORDING TO THE ACTUAL FOLDER AND FILE NAME PATTERN
                         if [ ${sim_ref} == ${name_sim} ]; then
                             input_path=${path_climate_data}
@@ -139,11 +140,11 @@ for timescale in ${timescales}; do
                         # start calculation
                         if [ ${statistic:0:4} != 'pctl' ]; then # not a percentile
                             # statistics for simulation and reference
-                            echo '##### Calculate Statistic ' ${statistic}
+                            echo '##### Calculate Statistic' ${statistic}
                             cdo_fun=${timescale}${statistic}
                             cdo ${cdo_fun} ${input_file} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
                         else # percentiles
-                            echo '##### Calculate Percentile Statistic ' ${statistic}
+                            echo '##### Calculate Percentile Statistic' ${statistic}
                             pctl=${statistic:4:2}
                             cdo_fun=${timescale}pctl,${pctl}
                             cdo -L ${cdo_fun} ${input_file} -${timescale}min ${input_file} -${timescale}max ${input_file} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
@@ -156,7 +157,7 @@ for timescale in ${timescales}; do
                         if [ ${sim_ref} == ${name_sim} ]; then
 
                             if [ ${unit_conv_factor} != '1' ]; then
-                                echo '##### Applying Unit Conversion Factor ' ${unit_conv_factor}
+                                echo '##### Applying Unit Conversion Factor' ${unit_conv_factor}
                                 cdo mulc,${unit_conv_factor} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc
                                 wait
                                 mv ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
@@ -164,7 +165,7 @@ for timescale in ${timescales}; do
                             fi
                             
                             if [ ${unit_conv_add} != '0' ]; then
-                                echo '##### Applying Unit Conversion Offset ' ${unit_conv_add}
+                                echo '##### Applying Unit Conversion Offset' ${unit_conv_add}
                                 cdo addc,${unit_conv_add} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc
                                 wait
                                 mv ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
