@@ -201,7 +201,7 @@ for timescale in ${timescales}; do
             echo 'Calculate mean and standard deviation over reference period'
             cdo ${cdo_fun}mean ${fn_merged} ${fn_mean}
             cdo ${cdo_fun}std ${fn_merged} ${fn_std}
-            
+            wait
         done # sim_ref
          
         # Calculate biases
@@ -219,10 +219,14 @@ for timescale in ${timescales}; do
             bias_std=${bias_path}/bias_std_rel_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
             
             cdo sub ${sim_mean} ${ref_mean} ${bias_abs}
+            wait
             cdo div ${bias_abs} ${ref_mean} ${bias_rel}
+
             cdo sub ${sim_std} ${ref_std} ${temp_path}/bias_std.nc
+            wait
             cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
             
+            wait
         fi
         
         rm -r ${temp_path}
@@ -271,6 +275,7 @@ for timescale in ${timescales}; do
             # Calculate the zonal mean
             cdo zonmean ${fn_mean} ${fn_mean_zonal}
             cdo zonmean ${fn_std} ${fn_std_zonal}
+            wait
         done
         
         # Calculate the bias in zonal means
@@ -289,10 +294,14 @@ for timescale in ${timescales}; do
             
             # subtract reference from simulation and then multiply with -1, so that all information from reference is retained (units, long_name etc.)
             cdo -L mulc,-1 -sub ${ref_mean} ${sim_mean} ${bias_abs}
+            wait
             cdo div ${bias_abs} ${ref_mean} ${bias_rel}
+
             cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
+            wait
             cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
-            
+
+            wait
         fi
         
         rm -r ${temp_path}

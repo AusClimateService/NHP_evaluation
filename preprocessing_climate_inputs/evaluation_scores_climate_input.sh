@@ -202,6 +202,7 @@ for timescale in ${timescales}; do
             fi
             cdo ${cdo_fun}mean ${fn_merged} ${fn_mean}
             cdo ${cdo_fun}std ${fn_merged} ${fn_std}
+            wait
         done # sim_ref
 
         # Calculate biases
@@ -222,11 +223,14 @@ for timescale in ${timescales}; do
             
             # subtract reference from simulation and then multiply with -1, so that all information from reference is retained (units, long_name etc.)
             cdo -L mulc,-1 -sub ${ref_mean} ${sim_mean} ${bias_abs}
-            cdo div ${bias_abs} ${ref_mean} ${bias_rel}
-            cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
-            cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
             wait
+            cdo div ${bias_abs} ${ref_mean} ${bias_rel}
 
+            cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
+            wait
+            cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
+
+            wait
             rm -r ${temp_path}
         fi
     done
