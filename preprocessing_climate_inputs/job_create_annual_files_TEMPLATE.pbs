@@ -5,7 +5,7 @@
 #PBS -N xxJOB_NAMExx
 #PBS -l walltime=5:00:00
 #PBS -l ncpus=2
-#PBS -l mem=4gb
+#PBS -l mem=6gb
 #PBS -l wd
 #PBS -l storage=gdata/er4+scratch/er4+gdata/wj02
 #PBS -o xxJOB_OUTPUT_FILExx

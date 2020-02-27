@@ -26,6 +26,12 @@
 # Author: Elisabeth Vogel, elisabeth.vogel@bom.gov.au
 # Date: 07/03/2019
 
+# Set bash script to fail on first error
+set -e
+# Trap each command and log it to output (except ECHO)
+trap '! [[ "$BASH_COMMAND" =~ (echo|for|\[) ]] && \
+cmd=`eval echo "$BASH_COMMAND" 2>/dev/null` && echo [$(date "+%Y%m%d %H:%M:%S")] $cmd' DEBUG
+
 # load required netcdf modules
 module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
 
@@ -42,7 +48,7 @@ statistics=$8
 name_sim=$9 # name for the simulation, used to create file names
 name_ref=${10} # name for the historical reference, used to create file names
 
-echo ${var} ${ref_start_year} ${ref_end_year} ${path_awra_run} ${path_awra_ref} ${out_path} ${timescales} ${statistics} ${name_sim} ${name_ref}
+echo '##### Script ran with' ${var} ${ref_start_year} ${ref_end_year} ${path_awra_run} ${path_awra_ref} ${out_path} ${timescales} ${statistics} ${name_sim} ${name_ref}
 
 #timescales="year seas mon"
 #statistics="mean min max std pctl05 pctl10 pctl50 pctl90 pctl95"
@@ -58,7 +64,7 @@ mkdir -p ${bias_path}
 # 1) Bias in annual, seasonal and monthly statistics
 ################################################################################
 
-echo '1) Bias in annual, seasonal and monthly statistics'
+echo '##### 1) Bias in annual, seasonal and monthly statistics'
 
 # Steps:
 # - Calculate the annual, seasonal and monthly mean for each year
@@ -71,7 +77,7 @@ echo '1) Bias in annual, seasonal and monthly statistics'
 for timescale in ${timescales}; do
     for statistic in ${statistics}; do
     
-        echo 'Statistic to calculate: ' ${timescale} ${statistic}
+        echo '##### Statistic to calculate:' ${timescale} ${statistic}
         
         # prepare temp folder
         temp_path=${out_path}/temp_${var}_${timescale}${statistic}_${name_sim}_${name_ref}
@@ -91,7 +97,7 @@ for timescale in ${timescales}; do
             if [ ! -f ${fn_merged} ]; then
             
                 # Calculate statistic for each year separately (less memory use)
-                echo 'Calculate values for each year separately (less memory use)'
+                echo '##### Calculate values for each year separately (less memory use)'
                 for (( year=ref_start_year;year<=ref_end_year;year++ )); do
                     echo '- ' ${year}
                     
@@ -169,7 +175,7 @@ for timescale in ${timescales}; do
                 done
 
                 # Merge all years
-                echo 'Merge all years'
+                echo '##### Merge all years'
                 cdo mergetime ${statistics_path}/${sim_ref}_${var}_${timescale}${statistic}_*.nc ${temp_path}/${sim_ref}_merged.nc
                 wait
                 cdo selyear,${ref_start_year}/${ref_end_year} ${temp_path}/${sim_ref}_merged.nc ${fn_merged}
@@ -198,10 +204,10 @@ for timescale in ${timescales}; do
             fn_std=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
 
             # Calculate mean and standard deviation over reference period
-            echo 'Calculate mean and standard deviation over reference period'
+            echo '##### Calculate mean and standard deviation over reference period'
             cdo ${cdo_fun}mean ${fn_merged} ${fn_mean}
             cdo ${cdo_fun}std ${fn_merged} ${fn_std}
-            
+            wait
         done # sim_ref
          
         # Calculate biases
@@ -209,7 +215,7 @@ for timescale in ${timescales}; do
         # if no simulation or reference dataset was given, skip it
         if [ ${name_ref} != "NONE" ] && [ ${name_ref} != ""  ]; then
             
-            echo 'Calculate biases'
+            echo '##### Calculate biases'
             sim_mean=${out_path}/${name_sim}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
             ref_mean=${out_path}/${name_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
             sim_std=${out_path}/${name_sim}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
@@ -219,10 +225,14 @@ for timescale in ${timescales}; do
             bias_std=${bias_path}/bias_std_rel_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
             
             cdo sub ${sim_mean} ${ref_mean} ${bias_abs}
+            wait
             cdo div ${bias_abs} ${ref_mean} ${bias_rel}
+
             cdo sub ${sim_std} ${ref_std} ${temp_path}/bias_std.nc
+            wait
             cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
             
+            wait
         fi
         
         rm -r ${temp_path}
@@ -271,6 +281,7 @@ for timescale in ${timescales}; do
             # Calculate the zonal mean
             cdo zonmean ${fn_mean} ${fn_mean_zonal}
             cdo zonmean ${fn_std} ${fn_std_zonal}
+            wait
         done
         
         # Calculate the bias in zonal means
@@ -289,14 +300,18 @@ for timescale in ${timescales}; do
             
             # subtract reference from simulation and then multiply with -1, so that all information from reference is retained (units, long_name etc.)
             cdo -L mulc,-1 -sub ${ref_mean} ${sim_mean} ${bias_abs}
+            wait
             cdo div ${bias_abs} ${ref_mean} ${bias_rel}
+
             cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
+            wait
             cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
-            
+
+            wait
         fi
         
         rm -r ${temp_path}
     done
 done
 
-
+echo '##### Completed'
