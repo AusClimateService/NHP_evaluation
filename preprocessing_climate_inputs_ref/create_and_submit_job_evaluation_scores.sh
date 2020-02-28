@@ -23,7 +23,7 @@ for var in ${VARIABLES[@]}; do
         for statistic in ${STATISTICS[@]}; do
             job_file_base_name=job_evaluation_scores_climate_input_awap_${var}_${timescale}_${statistic}
             job_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.pbs
-            job_name=awap_inputs_${gcm}_${var}_${timescale}_${statistic}_evaluation_scores
+            job_name=awap_inputs_${var}_${timescale}_${statistic}_evaluation_scores
             job_output_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.out
             job_error_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.error
             
