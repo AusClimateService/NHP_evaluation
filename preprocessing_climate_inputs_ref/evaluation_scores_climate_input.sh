@@ -74,7 +74,7 @@ for timescale in ${timescales}; do
             mkdir -p ${statistics_path}
 
             # prepare temp folder
-            temp_path=${out_path}/temp_${var_sim}_${timescale}${statistic}_${name_sim}_${name_ref}
+            temp_path=${out_path}/temp_${var}_${timescale}${statistic}_${sim_ref}
             mkdir -p ${temp_path}
 
             # Calculate statistic for each year separately (less memory use)
