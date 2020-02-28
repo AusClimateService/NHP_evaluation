@@ -80,7 +80,7 @@ for timescale in ${timescales}; do
             # Calculate statistic for each year separately (less memory use)
             echo '##### Calculate values for each year separately (less memory use)'
             for (( year=ref_start_year;year<=ref_end_year;year++ )); do
-                echo '- ' ${year}                  
+                echo '- ' ${year}
                 
                 fn_year=${statistics_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
                 if [ -f ${fn_year} ]; then
