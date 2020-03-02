@@ -24,6 +24,21 @@ mkdir -p ${PBS_JOBS_FOLDER}
 for var in ${VARIABLES[@]}; do
     for gcm in ${GCMS[@]}; do
         for timescale in ${TIMESCALES[@]}; do
+            case ${timescale} in
+                year)
+                    mem_requirement=8gb
+                    ;;
+                mon)
+                    mem_requirement=8gb
+                    ;;
+                seas)
+                    mem_requirement=16gb
+                    ;;
+                *)
+                    echo "No memory requirement defined for timescale" ${timescale}
+                    exit 1
+            esac
+
             for statistic in ${STATISTICS[@]}; do
                 job_file_base_name=job_evaluation_scores_climate_input_isimip_data_awap_${var}_${gcm}_${timescale}_${statistic}
                 job_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.pbs
@@ -41,6 +56,7 @@ for var in ${VARIABLES[@]}; do
                 sed -i "s|xxJOB_NAMExx|${job_name}|g" ${job_file}
                 sed -i "s|xxJOB_OUTPUT_FILExx|${job_output_file}|g" ${job_file}
                 sed -i "s|xxJOB_ERROR_FILExx|${job_error_file}|g" ${job_file}
+                sed -i "s|xxMEMORYxx|${mem_requirement}|g" ${job_file}
                 wait
                 
                 # submit job
