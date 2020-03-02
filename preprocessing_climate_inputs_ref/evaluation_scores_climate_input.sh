@@ -42,37 +42,26 @@ module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
 
 
 # read in variable
-var_sim=$1 # name of climate variable in dataset to evaluate
-var_ref=$2 # name of climate variable in reference dataset
-ref_start_year=$3
-ref_end_year=$4
-path_climate_data=$5 # climate data to evaluate
-path_statistics_ref=$6 # Statistics of reference dataset
-out_path_sim=$7
-timescales=$8
-statistics=${9}
-name_sim=${10} # name for the climate data to evaluate, used to create file names
-name_ref=${11} # name for the historical reference, used to create file names
-unit_conv_factor=${12} # multiply the simulation unit with this conversion factor to get unit of reference dataset
-unit_conv_add=${13} # add this number to the simulation unit to get unit of reference dataset
+var_ref=$1 # name of climate variable in reference dataset
+ref_start_year=$2
+ref_end_year=$3
+path_climate_ref=$4 # reference climate data (e.g. AWAP)
+out_path_ref=$5
+timescales=$6
+statistics=${7}
+name_ref=${8} # name for the historical reference, used to create file names
 
-echo "##### Script Ran With" ${var_sim} ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_data} ${path_statistics_ref} ${out_path_sim} ${timescales} ${statistics} ${name_sim} ${name_ref} ${unit_conv_factor} ${unit_conv_add}
+echo "##### Script Ran With" ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_ref} ${out_path_ref} ${timescales} ${statistics} ${name_ref}
 
 
-# create bias path
-bias_path=${out_path_sim}/bias_${name_ref}
-echo "##### Creating output folder for bias data" ${bias_path}
-mkdir -p ${bias_path}
-                
+
 for timescale in ${timescales}; do
     for statistic in ${statistics}; do
         echo '##### Statistic to calculate:' ${timescale} ${statistic}
         
-        sim_ref=${name_sim}
-        var=${var_sim}
-        out_path=${out_path_sim}
-
-        echo '##### Processing' ${sim_ref}
+        sim_ref=${name_ref}
+        var=${var_ref}
+        out_path=${out_path_ref}
 
         fn_merged=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
         if [ -f ${fn_merged} ]; then
@@ -98,7 +87,7 @@ for timescale in ${timescales}; do
                     echo '##### Statistic file already exists. Skipping' ${fn_year}
                 else
                     echo '##### Creating statistic file' ${fn_year}
-                    input_path=${path_climate_data}
+                    input_path=${path_climate_ref}/${var}
                     input_file=${input_path}/${var}*${year}.nc
                     
                     ##########################################################
@@ -133,25 +122,7 @@ for timescale in ${timescales}; do
                         cdo -L ${cdo_fun} ${input_file} -${timescale}min ${input_file} -${timescale}max ${input_file} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
                     fi # percentile?
                     wait
-                    
-                    ##########################################################
-                    
-                    # UNIT CONVERSIONS
-                    if [ ${unit_conv_factor} != '1' ]; then
-                        echo '##### Applying Unit Conversion Factor' ${unit_conv_factor}
-                        cdo mulc,${unit_conv_factor} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc
-                        wait
-                        mv ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
-                        wait
-                    fi
-                    
-                    if [ ${unit_conv_add} != '0' ]; then
-                        echo '##### Applying Unit Conversion Offset' ${unit_conv_add}
-                        cdo addc,${unit_conv_add} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc
-                        wait
-                        mv ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}_unit.nc ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
-                        wait
-                    fi
+
                     mv ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc ${fn_year}
                 fi # fn_year exists?
             done # for each year
@@ -183,35 +154,6 @@ for timescale in ${timescales}; do
         cdo ${cdo_fun}mean ${fn_merged} ${fn_mean}
         cdo ${cdo_fun}std ${fn_merged} ${fn_std}
         wait
-
-        # Calculate biases
-        # if no simulation or reference dataset was given, skip it
-        if [ ${name_ref} != "NONE" ] && [ ${name_ref} != ""  ]; then
-            echo '##### Calculate biases'
-
-            temp_path=${out_path_sim}/temp_bias_${var_sim}_${timescale}${statistic}_${name_sim}
-            mkdir -p ${temp_path}
-
-            sim_mean=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
-            sim_std=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
-            ref_mean=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
-            ref_std=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
-            bias_abs=${bias_path}/bias_abs_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
-            bias_rel=${bias_path}/bias_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
-            bias_std=${bias_path}/bias_std_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
-            
-            # subtract reference from simulation and then multiply with -1, so that all information from reference is retained (units, long_name etc.)
-            cdo -L mulc,-1 -sub ${ref_mean} ${sim_mean} ${bias_abs}
-            wait
-            cdo div ${bias_abs} ${ref_mean} ${bias_rel}
-
-            cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
-            wait
-            cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
-
-            wait
-            rm -r ${temp_path}
-        fi
     done
 done
 

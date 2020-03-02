@@ -54,14 +54,13 @@ esac
 ref_start_year="1976"
 ref_end_year="2005"
 path_climate_data="/scratch/er4/HYDROPROJ/ISIMIP_data/processed/annual_files/${gcm}/historical"
-path_climate_ref="/g/data/er4/data/CLIMATE"
+path_statistics_ref="/scratch/er4/${USER}/hydro_projections/data/evaluation/AWAP"
 out_path="/scratch/er4/${USER}/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs/${gcm}"
-out_path_ref="/scratch/er4/${USER}/hydro_projections/data/evaluation/AWAP"
 name_sim="isimip_${gcm}"
 name_ref="awap"
 
 
-sh evaluation_scores_climate_input.sh ${var_sim} ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_data} ${path_climate_ref} ${out_path} ${out_path_ref} ${timescale} ${statistic} ${name_sim} ${name_ref} ${unit_conv_factor} ${unit_conv_add}
+sh evaluation_scores_climate_input.sh ${var_sim} ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_data} ${path_statistics_ref} ${out_path} ${timescale} ${statistic} ${name_sim} ${name_ref} ${unit_conv_factor} ${unit_conv_add}
 
 wait
 
