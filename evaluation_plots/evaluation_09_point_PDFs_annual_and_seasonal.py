@@ -10,7 +10,6 @@ import pandas as pd
 ### Functions
 
 # import data evaluation plotting functions
-# sys.path.append('/g/data1a/er4/exv563/hydro_projections/code/functions')
 import evaluation as evl
 
 
