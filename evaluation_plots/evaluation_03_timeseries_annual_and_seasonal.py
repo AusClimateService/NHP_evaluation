@@ -1,6 +1,4 @@
 import os
-import sys
-import json
 # turn off all warnings
 import warnings; warnings.simplefilter('ignore')
 
@@ -12,8 +10,7 @@ import evaluation as evl
 
 
 ### Parameters
-with open('config.json', 'r') as fp:
-    parameters = json.load(fp)
+parameters = evl.config.load_config()
 
 # prepare settings
 skip_existing = parameters['skip_existing']
