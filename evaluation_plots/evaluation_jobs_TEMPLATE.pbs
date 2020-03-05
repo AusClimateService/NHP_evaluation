@@ -7,7 +7,7 @@
 #PBS -l ncpus=xxNUM_CPUSxx
 #PBS -l mem=xxMEMORYxx
 #PBS -l wd
-#PBS -l storage=gdata/er4+scratch/er4
+#PBS -l storage=gdata/er4+scratch/er4+gdata/fj8
 #PBS -o xxJOB_OUTPUT_FILExx
 #PBS -e xxJOB_ERROR_FILExx
 

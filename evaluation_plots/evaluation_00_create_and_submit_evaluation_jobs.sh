@@ -71,10 +71,12 @@ create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 6
 cpus=4
-memory=8gb
+memory=32gb
 python_script='evaluation_06a_NRM_regions_PDFs_spatial_variability.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
+cpus=4
+memory=16gb
 python_script='evaluation_06b_NRM_regions_spatial_correlation.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
