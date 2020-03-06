@@ -1,10 +1,10 @@
 {
  "skip_existing": true,
- "data_path_processed_ref": "/scratch/er4/vd5822/hydro_projections/data/evaluation/AWAP",
- "data_path_processed_sim": "/scratch/er4/vd5822/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs",
+ "data_path_processed_ref": "/scratch/er4/${USER}/hydro_projections/data/evaluation/AWAP",
+ "data_path_processed_sim": "/scratch/er4/${USER}/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs",
  "path_daily_ref": "/g/data/er4/data/CLIMATE",
  "path_daily_sim": "/scratch/er4/HYDROPROJ/ISIMIP_data/processed/annual_files",
- "plot_path": "/scratch/er4/vd5822/hydro_projections/plots/data_evaluation/ISIMIP_AWAP/climate_inputs",
+ "plot_path": "/scratch/er4/${USER}/hydro_projections/plots/data_evaluation/ISIMIP_AWAP/climate_inputs",
  "evaluation_year_start": 1976,
  "evaluation_year_end": 2005,
  "name_sim_prefix": "isimip",
