@@ -1,19 +1,17 @@
 #!/bin/bash
 
-#sm etot qtot
-VARIABLES=(sm etot qtot)
+# sm etot qtot
+VARIABLES=(sm e0 etot qtot)
 
-# GFDL-ESM2M
-GCMS=(GFDL-ESM2M)
+# ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5
+GCMS=(ACCESS1-0 CNRM-CM5 GFDL-ESM2M MIROC5)
 
 # year seas mon
 TIMESCALES=(year seas mon)
 
-# mean min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95
-STATISTICS=(mean min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95)
-
-
-
+# mean_or_sum min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95
+STATISTICS=(mean_or_sum min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95)
+# mean_or_sum will be replaced below by 'mean' or 'sum' depending on the variable
 
 PBS_JOBS_FOLDER=PBS_jobs
 PBS_JOB_TEMPLATE_FILE=job_evaluation_scores_awra_output_isimip_data_TEMPLATE.pbs
@@ -26,6 +24,18 @@ for var in ${VARIABLES[@]}; do
     for gcm in ${GCMS[@]}; do
         for timescale in ${TIMESCALES[@]}; do
             for statistic in ${STATISTICS[@]}; do
+
+                if [ ${statistic} == 'mean_or_sum' ]; then
+                case ${var} in
+                    qtot|e0|etot)
+                        statistic=sum
+                        ;;
+                    sm)
+                        statistic=mean
+                        ;;
+                esac
+                fi
+
                 job_file_base_name=job_evaluation_scores_awra_output_isimip_data_${var}_${gcm}_${timescale}_${statistic}
                 job_file=${PBS_JOBS_FOLDER}/${job_file_base_name}.pbs
                 job_name=isimip_outputs_${gcm}_${var}_${timescale}_${statistic}_evaluation_scores_awra_output
