@@ -6,7 +6,7 @@ VARIABLES=(rain_day temp_max_day temp_min_day wind solar_exposure_day)
 # year seas mon
 TIMESCALES=(year seas mon)
 
-# mean sum min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95
+# mean_or_sum min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95
 STATISTICS=(mean_or_sum min max std pctl05 pctl10 pctl25 pctl50 pctl75 pctl90 pctl95)
 # mean_or_sum will be replaced below by 'mean' or 'sum' depending on the variable
 
