@@ -45,9 +45,9 @@ out_path_ref=$5
 timescale=$6
 statistic=$7
 name_ref=$8 # name for the historical reference, used to create file names
-temp_path_ref=$9 # path for temporary files (usually the same as the output path, but on scratch)
+temp_path=$9 # path for temporary files (usually the same as the output path, but on scratch)
 
-echo "##### Script Ran With" ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_ref} ${out_path_ref} ${timescale} ${statistic} ${name_ref} ${temp_path_ref}
+echo "##### Script Ran With" ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_ref} ${out_path_ref} ${timescale} ${statistic} ${name_ref} ${temp_path}
 
 echo '##### Statistic to calculate:' ${timescale} ${statistic}
 
@@ -56,7 +56,7 @@ var=${var_ref}
 out_path=${out_path_ref}
 
 # Prepare temp folder
-temp_path=${temp_path_ref}/temp_${var}_${timescale}${statistic}_${sim_ref}
+temp_path=${temp_path}/temp_${var}_${timescale}${statistic}_${sim_ref}
 mkdir -p ${temp_path}
 
 
