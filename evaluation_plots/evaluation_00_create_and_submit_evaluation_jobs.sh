@@ -1,6 +1,7 @@
-# This script creates one PBS job script for every python script and submits the job. All scripts use the same config file that is in the folder.
-# TODO: Probably better to pass the location of the config file as an argument to the python function (at the moment, it assumes that it
-# is in the same path as the python functions.)
+# This script creates one PBS job script for every python script and submits the job.
+# All scripts use the same config file ("config.json") that is in the folder.
+# TODO: Probably better to pass the location of the config file as an argument to the python function
+# (at the moment, it assumes that it is in the same folder as the python functions.)
 
 # Author: Elisabeth Vogel, elisabeth.vogel@bom.gov.au
 # Date: 19/09/2019
@@ -42,60 +43,65 @@ create_job_and_submit() {
 # 1
 cpus=4
 memory=16gb
-python_script='evaluation_01_bias_annual_and_seasonal_per_gcm.py'
+python_script='evaluation_01a_bias_maps.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 2
 cpus=4
-memory=8gb
-python_script='evaluation_02_boxplots_annual_and_seasonal_bias.py'
+memory=16gb
+python_script='evaluation_01b_bias_lag1_correlation.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 3
 cpus=4
 memory=8gb
-python_script='evaluation_03_timeseries_annual_and_seasonal.py'
+python_script='evaluation_02_climatologies.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 4
 cpus=4
-memory=8gb
-python_script='evaluation_04_climatologies.py'
+memory=32gb
+python_script='evaluation_03a_PDFs_spatial_variability.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 5
 cpus=4
-memory=16gb
-python_script='evaluation_05_animations.py'
+memory=32gb
+python_script='evaluation_03b_CDFs_spatial_variability.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 6
 cpus=4
-memory=32gb
-python_script='evaluation_06a_NRM_regions_PDFs_spatial_variability.py'
-create_job_and_submit "${python_script}" ${cpus} ${memory}
-
-cpus=4
 memory=16gb
-python_script='evaluation_06b_NRM_regions_spatial_correlation.py'
+python_script='evaluation_04_spatial_correlation.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 7
 cpus=4
 memory=8gb
-python_script='evaluation_07_NRM_regions_PDFs-temporal_variability.py'
+python_script='evaluation_05a_PDFs_temporal_variability.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
-# 8 - to do
+# 8
+cpus=4
+memory=8gb
+python_script='evaluation_05b_CDFs_temporal_variability.py'
+create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 9
 cpus=4
 memory=8gb
-python_script='evaluation_09_point_PDFs_annual_and_seasonal.py'
+python_script='evaluation_06a_point_PDFs.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 10
 cpus=4
 memory=8gb
-python_script='evaluation_10_point_Fourier_diagrams.py'
+python_script='evaluation_06b_point_CDFs.py'
+create_job_and_submit "${python_script}" ${cpus} ${memory}
+
+# 11
+cpus=4
+memory=8gb
+python_script='evaluation_07_point_Fourier_diagrams.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}

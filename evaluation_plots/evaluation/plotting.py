@@ -21,15 +21,17 @@ from evaluation.helpers import *
 
 # Function definitions
 
-# 01) Bias maps #################################################################
+# 01a) Bias maps #################################################################
 # TODO: uses Basemap - change to cartopy
 def plot_bias(datasets, name_ref, name_sim, var,
               statistic, year_start, year_end,
+              unit=None, region='AU',
+              time_scales = ['annual', 'DJF', 'MAM', 'JJA', 'SON'],
               coordinates=dict(llcrnrlat=-44.5,
                          urcrnrlat=-10.7,
                          llcrnrlon=112,
                          urcrnrlon=156.25),
-              fn_plot=None, adjust=0.93):
+              fn_plot=None, adjust=0.90):
 
     """
     This function creates a plot with a) the 30-year mean for the historical reference,
@@ -38,24 +40,27 @@ def plot_bias(datasets, name_ref, name_sim, var,
     """
     
     # plot absolute bias for temperature, else relative bias
-    if var in ['temp_min_day', 'temp_max_day']:
-        plot_bias_type = 'bias_abs'
-    else:
-        plot_bias_type = 'bias_rel'
+    # if var in ['temp_min_day', 'temp_max_day', 'rain_day']:
+    #     plot_bias_type = 'bias_abs'
+    # else:
+    #     plot_bias_type = 'bias_rel'
+    plot_bias_type = 'bias_abs'
 
     # create a map
     map = Basemap(resolution='c', **coordinates)
     types = [name_ref, name_sim, plot_bias_type]
-    time_scales = ['annual', 'DJF', 'MAM', 'JJA', 'SON']
    
     # create a figure
-    fig, axes = plt.subplots(nrows=len(time_scales), ncols=len(types), figsize=(10,12))
+    nrows = len(time_scales)
+    ncols = len(types)
+    fig, axes = plt.subplots(nrows=nrows,ncols=ncols,figsize=(3.33*ncols,2.4*nrows))
 
     # loop through columns and rows
     # 3 colums: mean of reference, mean of GCM, bias
     # 5 rows: annual, DJF, MAM, JJA, SON
-    for col_idx in range(len(types)):
-        for row_idx in range(len(time_scales)):
+    
+    for row_idx in range(len(time_scales)):
+        for col_idx in range(len(types)):
             
             ds = None # set dataset to plot to Null before reading in new data
             ax = axes[row_idx, col_idx]
@@ -66,31 +71,30 @@ def plot_bias(datasets, name_ref, name_sim, var,
             # set plotting parameters
 
             if type in [name_ref, name_sim]:
+                # Set vmax to the maximum value for this time scale (annual, seasonal), so that
+                # the plots are comparable
                 vmin = 0
-                if var == 'qtot': # maximum values too large, therefore times 0.5
-                    vmax = 0.5 * max([float(datasets['annual'][name_ref][var].max()),
-                                float(datasets['seasonal'][name_ref][var].max()),
-                                float(datasets['annual'][name_sim][var].max()),
-                                float(datasets['seasonal'][name_sim][var].max())])
-                else:
+                if time_scale == 'annual':
                     vmax = max([float(datasets['annual'][name_ref][var].max()),
-                            float(datasets['seasonal'][name_ref][var].max()),
-                            float(datasets['annual'][name_sim][var].max()),
-                            float(datasets['seasonal'][name_ref][var].max())])
-                            
+                                float(datasets['annual'][name_sim][var].max())])
+                elif time_scale in ['DJF', 'MAM', 'JJA', 'SON']:
+                    vmax = max([float(datasets['seasonal'][name_ref][var].sel(season=time_scale).max()),
+                                float(datasets['seasonal'][name_sim][var].sel(season=time_scale).max())])
                 vmax = np.ceil(vmax)
+
                 if var in ['temp_min_day', 'temp_max_day', 'solar_exposure_day']:
                     cmap = plt.get_cmap('Reds', 10)
                 else:
                     cmap = plt.get_cmap('Blues', 10)
-                    
-                cmap.set_bad('white')
-                cmap.colorbar_extend = True
-                legend_title = '%s (abs)pl' % var
+                
+                if unit is not None:    
+                    legend_title = '%s (%s)' % (get_variable_longname(var), unit)
+                else:
+                    legend_title = '%s' % get_variable_longname(var)
                 
             elif type == 'bias_abs':
-                vmax = dict(temp_min_day=10, temp_max_day=10)[var]
-                vmin = -vmax
+                vmax = None
+                vmin = None
                 
                 if var in ['temp_min_day', 'temp_max_day', 'solar_exposure_day']:
                     cmap = plt.get_cmap('RdBu_r', 11)
@@ -99,9 +103,10 @@ def plot_bias(datasets, name_ref, name_sim, var,
                 
                 cmap.set_under('#addd8e')
                 cmap.set_over('#dd1c77')
-                cmap.set_bad('white')
-                cmap.colorbar_extend = True
-                legend_title = 'bias (abs)'
+                if unit is not None:
+                    legend_title = 'Bias (%s)' % unit
+                else:
+                    legend_title = 'Bias (abs)'
                 
             elif type == 'bias_rel':
                 vmin = -100
@@ -112,19 +117,20 @@ def plot_bias(datasets, name_ref, name_sim, var,
                 else:
                     cmap = plt.get_cmap('RdBu', 11)
                     
-                cmap.set_bad('white')
-                cmap.colorbar_extend = True
-                legend_title = 'rel. bias (%)'
+                legend_title = 'Bias (%)'
                 
             if type == 'bias_rel':
-                levels = [-100,-50,-25,-10,-5,5,10,25,50,100]
+                # levels = [-100,-50,-25,-10,-5,5,10,25,50,100]
+                levels = [-50,-25,-10,-5,-2.5,2.5,5,10,25,50]
                 # levels = None
                 extend = 'neither'
             else:
                 levels = None
-                extend = 'max'
+                extend = 'both'
+
+            cmap.set_bad('#f0f0f0')
+            cmap.colorbar_extend = True
                  
-                    
             # read in data to plot
             if time_scale == 'annual':
                 ds = datasets[time_scale][type].isel(time=0)
@@ -137,15 +143,22 @@ def plot_bias(datasets, name_ref, name_sim, var,
                         
             # create plot
             ds[var].plot.pcolormesh(ax=ax, vmin=vmin, vmax=vmax, levels=levels, extend=extend,cmap=cmap, cbar_kwargs={'label':legend_title})
+            # using imshow: coastlines do not match
             # ds[var].plot.imshow(ax=ax, vmin=vmin, vmax=vmax, cmap=cmap, cbar_kwargs={'label':legend_title})
             
             # turn off borders
             ax.axis('off')
             
             # add title
-            median = np.float(ds[var].median())
-            plot_title = [name_ref.upper(), name_sim.upper(), 'rel. bias'][col_idx]
-            plot_title = '%s (%s) \nmedian: %.3f' % (plot_title, time_scale, median)
+            mean = np.float(ds[var].mean())
+            if plot_bias_type == 'bias_abs':
+                plot_title = [name_ref.upper(), name_sim.upper(), 'Abs. bias'][col_idx]
+            elif plot_bias_type == 'bias_rel':
+                plot_title = [name_ref.upper(), name_sim.upper(), 'Rel. bias'][col_idx]
+            if unit is not None:
+                plot_title = '%s (%s) \nMean: %.2f%s' % (plot_title, time_scale, mean, unit)
+            else: 
+                plot_title = '%s (%s) \nMean: %.2f' % (plot_title, time_scale, mean)
             ax.set_title(plot_title, fontsize=10)
             
             # add map
@@ -154,7 +167,106 @@ def plot_bias(datasets, name_ref, name_sim, var,
 
     plt.tight_layout()
     plt.subplots_adjust(top=adjust)
-    x=fig.suptitle('%s (%s), %s vs %s, period: %s-%s' % (get_variable_longname(var), statistic, name_sim.upper(), name_ref.upper(),
+    x=fig.suptitle('%s: %s vs %s\nRegion: %s, Period: %s-%s' % (get_variable_longname(var), 
+                                                         name_sim.upper(), name_ref.upper(), region,
+                                                         year_start,year_end), fontsize=16)
+
+    if fn_plot is not None:
+        create_containing_folder(fn_plot)
+        fig.savefig(fn_plot, dpi=300)
+
+    return fig
+    
+# 01b) Bias maps lag-1 correlation #################################################################
+# similar to maps of the mean bias as previous function, but the difference is
+# that it creates one map for annual, seasonal and monthly, rather than the different seasons
+def plot_bias_corr(datasets, name_ref, name_sim, var,
+              year_start, year_end, correlation_type='lag1corr',
+              unit=None, region='AU',
+              time_scales = ['annual', 'seasonal', 'monthly'],
+              coordinates=dict(llcrnrlat=-44.5,
+                         urcrnrlat=-10.7,
+                         llcrnrlon=112,
+                         urcrnrlon=156.25),
+              fn_plot=None, adjust=0.83):
+
+    """
+    This function creates a plot with a) the 30-year mean for the historical reference,
+    b) the simulated / bias corrected data, c) the absolute/relative bias of both, for
+    annual and seasonal values.
+    """
+    
+    # create a map
+    map = Basemap(resolution='c', **coordinates)
+    types = [name_ref, name_sim, 'bias']
+   
+    # create a figure
+    nrows = len(time_scales)
+    ncols = len(types)
+    fig, axes = plt.subplots(nrows=nrows,ncols=ncols,figsize=(3.33*ncols,2.4*nrows))
+
+    # loop through columns and rows
+    # 3 colums: mean of reference, mean of GCM, bias
+    # 3 rows: annual, seasonal, monthly
+    
+    for row_idx in range(len(time_scales)):
+        for col_idx in range(len(types)):
+            
+            ds = None # set dataset to plot to Null before reading in new data
+            ax = axes[row_idx, col_idx]
+            
+            type = types[col_idx]
+            time_scale = time_scales[row_idx]
+            
+            # set plotting parameters
+
+            if type in [name_ref, name_sim]:
+                # Set vmax to the maximum value for this time scale (annual, seasonal, monthly), so that
+                # the plots are comparable
+                vmin = -1
+                vmax = 1
+                cmap = plt.get_cmap('RdBu', 10)
+                legend_title = 'Lag-1 correlation'
+                
+            elif type == 'bias':
+                vmax = 1
+                vmin = -1
+                cmap = plt.get_cmap('RdBu', 11)
+                cmap.set_under('#addd8e')
+                cmap.set_over('#dd1c77')
+                legend_title = 'Bias (abs)'
+                
+            levels = None
+            extend = 'neither'
+
+            cmap.set_bad('#f0f0f0')
+            cmap.colorbar_extend = True
+                 
+            # read in data to plot
+            ds = datasets[time_scale]['%s_%s' % (type, correlation_type)].isel(time=0)
+                        
+            # create plot
+            ds[var].plot.pcolormesh(ax=ax, vmin=vmin, vmax=vmax, levels=levels, extend=extend,cmap=cmap, cbar_kwargs={'label':legend_title})
+            # using imshow: coastlines do not match
+            # ds[var].plot.imshow(ax=ax, vmin=vmin, vmax=vmax, cmap=cmap, cbar_kwargs={'label':legend_title})
+            
+            # turn off borders
+            ax.axis('off')
+            
+            # add title
+            mean = np.float(ds[var].mean())
+            plot_title = [name_ref.upper(), name_sim.upper(), 'Abs. bias'][col_idx]
+            plot_title = '%s (%s) \nMean: %.2f' % (plot_title, time_scale, mean)
+            ax.set_title(plot_title, fontsize=10)
+            
+            # add map
+            map.drawcoastlines(ax=ax, linewidth=0.2)
+            map.drawstates(ax=ax, linewidth=0.1)
+
+    plt.tight_layout()
+    plt.subplots_adjust(top=adjust)
+    x=fig.suptitle('%s: %s vs %s\nRegion: %s, Period: %s-%s' % (get_variable_longname(var), 
+                                                         name_sim.upper(), name_ref.upper(), region,
                                                          year_start,year_end), fontsize=16)
 
     if fn_plot is not None:
@@ -236,7 +348,8 @@ def plot_timeseries(dataframe, x, y, var, name_sim_prefix, name_ref,
 
 # 04) Climatologies #################################################################
 # Plot mean monthly values (aggregated over Australia or region) and standard deviation around monthly mean.  
-def plot_climatologies(dataframe, x, y, var, name_sim_prefix, name_ref,
+def plot_climatologies(dataframe, x, y, name_sim_prefix, name_ref,
+                    var=None, region='AU',
                     hue='type', col='var', row='statistic',
                     palette=None, height=2, aspect=1.5, linewidth=0.8, 
                     fn_plot=None, adjust=0.85):
@@ -250,11 +363,17 @@ def plot_climatologies(dataframe, x, y, var, name_sim_prefix, name_ref,
     plot = sns.relplot(data=dataframe, kind='line', x=x, y=y,
                    hue=hue, col=col, row=row,
                    palette=palette, err_style='bars',
-                   linewidth=linewidth, err_kws={'linewidth':linewidth-0.3},
+                   linewidth=linewidth, err_kws={'linewidth':linewidth-0.3, 'capsize':2},
                    facet_kws=dict(sharey=False))
         
     plt.subplots_adjust(top=adjust)
-    plot_title = 'Climatologies -- %s vs %s data' % (name_sim_prefix.upper(), name_ref.upper())
+    if var is None:
+        plot_title = 'Climatology, %s vs %s data\nRegion: %s' % (name_sim_prefix.upper(),
+                                                                    name_ref.upper(), region)
+    else:
+        plot_title = 'Climatology: %s, %s vs %s data\nRegion: %s' % (get_variable_longname(var), 
+                                                                            name_sim_prefix.upper(),
+                                                                            name_ref.upper(), region)
     x = plt.suptitle(plot_title,fontsize=12)
 
     if fn_plot is not None:
@@ -323,7 +442,7 @@ def plot_distribution(dataframe, x, var, statistic, name_sim_prefix, name_ref,
     
     n_row = len(dataframe[row].unique())
     n_col = len(dataframe[col].unique())
-    figure_size = (5 * n_row, 2 * n_col)
+    figure_size = (height * aspect * n_col, height * n_row)
     
     plot_title = '%s (PDF of annual and seasonal %s),\n%s vs %s data' % (get_variable_longname(var), statistic, name_sim_prefix.upper(), name_ref.upper())
     
@@ -368,8 +487,63 @@ def plot_distribution(dataframe, x, var, statistic, name_sim_prefix, name_ref,
         
     return plot
 
+
 #################################################################
-# 06b) Scatter plot of simulated / bias corrected data vs historical reference.
+# 06b), 07b), 09)b empirical cumulative distribution plot - CDF instead of PDF
+def plot_ecdf(dataframe, x, var, statistic, name_sim_prefix, name_ref, 
+                    hue='type', col='time_scale', row='statistic', palette=None, 
+                    height=2, aspect=1.5, linewidth=0.8, 
+                    fn_plot=None):
+    
+    n_row = len(dataframe[row].unique())
+    n_col = len(dataframe[col].unique())
+    figure_size = (height * aspect * n_col, height * n_row)
+    
+    plot_title = '%s (PDF of annual and seasonal %s),\n%s vs %s data' % (get_variable_longname(var), statistic, name_sim_prefix.upper(), name_ref.upper())
+    
+    # prepare the string to pass to the facet grid function
+    facet_str = '~ %s + %s' % (col, row)
+    
+    # create plot
+    plot = (ggplot(data=dataframe, mapping=aes(x=x, color=hue, fill=hue)) +
+                        
+            stat_ecdf(geom='step', size=0.5) +
+            
+            facet_wrap(facet_str, scales='free', ncol=n_col,
+                      labeller=labeller(cols=label_value,multi_line=False), dir='v') +
+            
+        theme(panel_background = element_rect(fill='#f0f0f0'),
+           # panel_grid_major = element_line(linetype='dashed', color='white', size=1),
+              panel_grid_major = element_blank(),
+           panel_grid_minor = element_blank(),
+           # axis_ticks = element_blank(),
+           panel_border = element_blank(),
+           strip_text = element_text(size=9, color='black'),
+           strip_background = element_blank(),
+           figure_size = figure_size,
+           legend_key_size = 20,
+           legend_key_width = 20,
+           axis_title_y = element_text(size=8),
+           axis_text_x = element_text(size=6),
+           axis_text_y = element_text(size=7),
+           panel_spacing_x = 0.4,
+             panel_spacing_y = 0.2) +
+                      
+            labs(x='', y='density\n', title=plot_title) +
+            
+        scale_x_continuous(expand=(0,0.1)) +
+        scale_y_continuous(expand=(0,0)))
+            
+
+    # save plot
+    if fn_plot is not None:
+        create_containing_folder(fn_plot)
+        plot.save(fn_plot, dpi=300)
+        
+    return plot
+
+#################################################################
+# 06c) Scatter plot of simulated / bias corrected data vs historical reference.
 def plot_spatial_correlation(dataframe, x, y, var, statistic, name_sim_prefix, name_ref, 
                     hue='type', col='time_scale', row='statistic', palette=None, 
                     height=2, aspect=1.5, linewidth=0.8, 
@@ -377,7 +551,7 @@ def plot_spatial_correlation(dataframe, x, y, var, statistic, name_sim_prefix, n
     
     n_row = len(dataframe[row].unique())
     n_col = len(dataframe[col].unique())
-    figure_size = (5 * n_row, 2 * n_col)
+    figure_size = (height * aspect * n_col, height * n_row)
     
     plot_title = '%s (annual and seasonal %s),\n%s vs %s data' % (get_variable_longname(var), statistic, name_sim_prefix.upper(), name_ref.upper())
     
@@ -524,9 +698,9 @@ def plot_fourier_transform_wavelengths(dataframe, location_name, var, name_sim_p
             for x in top_freq:
                 top_freq_idx = top_freq_idx + list(np.where(fourier_transform == x)[0])
                 
-            # testing
-            print(top_freq)
-            print(top_freq_idx)
+            # # testing
+            # print(top_freq)
+            # print(top_freq_idx)
             
             # highlight top frequencies using dot points
             ax.scatter(wavelengths[top_freq_idx], fourier_transform[top_freq_idx], color='#800026', s=10)

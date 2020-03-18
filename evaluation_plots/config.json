@@ -1,23 +1,40 @@
 {
  "skip_existing": true,
- "data_path_processed_ref": "/scratch/er4/${USER}/hydro_projections/data/evaluation/AWAP",
- "data_path_processed_sim": "/scratch/er4/${USER}/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs",
- "path_daily_ref": "/g/data/er4/data/CLIMATE",
- "path_daily_sim": "/scratch/er4/HYDROPROJ/ISIMIP_data/processed/annual_files",
- "plot_path": "/scratch/er4/${USER}/hydro_projections/plots/data_evaluation/ISIMIP_AWAP/climate_inputs",
+ "data_path_processed_ref": "/g/data/er4/exv563/hydro_projections/data/evaluation/AWAP",
+ "data_path_processed_sim": "/g/data/er4/exv563/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs",
+ "plot_path": "/g/data/er4/exv563/hydro_projections/plots/data_evaluation/ISIMIP_AWAP/climate_inputs",
  "evaluation_year_start": 1976,
  "evaluation_year_end": 2005,
- "name_sim_prefix": "isimip",
  "name_ref": "awap",
+ "name_sim_prefix": "isimip",
  "gcms": [
   "ACCESS1-0",
   "CNRM-CM5",
   "GFDL-ESM2M",
   "MIROC5"
  ],
- "vars": [
-  "rain_day"
+ "include_all_gcms_plot": false,
+ "seasons": [
+  "annual",
+  "DJF",
+  "MAM",
+  "JJA",
+  "SON"
  ],
+ "vars": [
+  "rain_day",
+  "temp_min_day",
+  "temp_max_day",
+  "wind",
+  "solar_exposure_day"
+ ],
+ "units": {
+  "rain_day": "mm",
+  "temp_min_day": "\u00b0C",
+  "temp_max_day": "\u00b0C",
+  "wind": "m/s",
+  "solar_exposure_day": "MJ/m2"
+ },
  "ref_vars": {
   "rain_day": "rain_day",
   "temp_min_day": "temp_min_day",
@@ -48,19 +65,13 @@
  },
  "mask_file": "/g/data/er4/exv563/hydro_projections/data/spatial/awra_awap_mask/awra_awap_mask.nc",
  "mask_var_name_in_nc": "mask",
- "region_file": "/g/data/er4/data/outputs/verification/data/spatial/NRM_regions/NRM_super_clusters_nc/NRM_super_clusters.nc",
+ "region_file": "/g/data/er4/exv563/hydro_projections/data/spatial/NRM_regions/NRM_super_clusters_nc/NRM_super_clusters.nc",
  "region_var": "NRM_super_cluster",
- "region_meta_data": "/g/data/er4/data/outputs/verification/data/spatial/NRM_regions/NRM_super_clusters_nc/NRM_super_clusters_meta.csv",
+ "region_meta_data": "/g/data/er4/exv563/hydro_projections/data/spatial/NRM_regions/NRM_super_clusters_nc/NRM_super_clusters_meta.csv",
  "region_meta_data_id_column": "FID",
  "region_meta_data_label_column": "label",
  "region_codes_to_use": [
   "AU",
-  0,
-  1,
-  2,
-  3
- ],
- "region_codes_to_use_spatio_temporal": [
   0,
   1,
   2,
@@ -84,59 +95,128 @@
    "lon": 116.108832
   }
  },
- "bias_maps_statistics": [
-  "mean",
-  "min",
-  "max",
-  "std",
-  "pctl05",
-  "pctl25",
-  "pctl50",
-  "pctl75",
-  "pctl95"
- ],
- "boxplots_statistics": [
-  "mean",
-  "min",
-  "max",
-  "std",
-  "pctl05",
-  "pctl25",
-  "pctl50",
-  "pctl75",
-  "pctl95"
- ],
- "boxplots_showfliers": false,
- "timeseries_statistics": [
-  "mean",
-  "min",
-  "max",
-  "std",
-  "pctl05",
-  "pctl25",
-  "pctl50",
-  "pctl75",
-  "pctl95"
- ],
- "climatologies_statistics": [
-  "mean",
-  "min",
-  "max",
-  "std",
-  "pctl05",
-  "pctl25",
-  "pctl50",
-  "pctl75",
-  "pctl95"
- ],
- "animation_daily_start": "2000-01-01",
- "animation_daily_end": "2000-01-31",
- "animation_daily_years_read_in": [
-  2000
- ],
- "animation_create_ref_animations": true,
+ "bias_maps_statistics": {
+  "rain_day": [
+   "sum",
+   "pctl05",
+   "pctl10",
+   "pctl95",
+   "pctl90"
+  ],
+  "temp_min_day": [
+   "mean",
+   "pctl05",
+   "pctl10",
+   "pctl95",
+   "pctl90"
+  ],
+  "temp_max_day": [
+   "mean",
+   "pctl05",
+   "pctl10",
+   "pctl95",
+   "pctl90"
+  ],
+  "wind": [
+   "mean",
+   "pctl05",
+   "pctl10",
+   "pctl95",
+   "pctl90"
+  ],
+  "solar_exposure_day": [
+   "mean",
+   "pctl05",
+   "pctl10",
+   "pctl95",
+   "pctl90"
+  ]
+ },
+ "climatologies_statistics": {
+  "rain_day": [
+   "sum",
+   "pctl05",
+   "pctl95"
+  ],
+  "temp_min_day": [
+   "mean",
+   "pctl05",
+   "pctl95"
+  ],
+  "temp_max_day": [
+   "mean",
+   "pctl05",
+   "pctl95"
+  ],
+  "wind": [
+   "mean",
+   "pctl05",
+   "pctl95"
+  ],
+  "solar_exposure_day": [
+   "mean",
+   "pctl05",
+   "pctl95"
+  ]
+ },
+ "pdf_spatial_statistics": {
+  "rain_day": [
+   "sum"
+  ],
+  "temp_min_day": [
+   "mean",
+   "min"
+  ],
+  "temp_max_day": [
+   "mean",
+   "max"
+  ],
+  "wind": [
+   "mean"
+  ],
+  "solar_exposure_day": [
+   "mean"
+  ]
+ },
+ "pdf_temporal_statistics": {
+  "rain_day": [
+   "sum"
+  ],
+  "temp_min_day": [
+   "mean",
+   "min"
+  ],
+  "temp_max_day": [
+   "mean",
+   "max"
+  ],
+  "wind": [
+   "mean"
+  ],
+  "solar_exposure_day": [
+   "mean"
+  ]
+ },
+ "point_pdf_statistics": {
+  "rain_day": [
+   "sum"
+  ],
+  "temp_min_day": [
+   "mean",
+   "min"
+  ],
+  "temp_max_day": [
+   "mean",
+   "max"
+  ],
+  "wind": [
+   "mean"
+  ],
+  "solar_exposure_day": [
+   "mean"
+  ]
+ },
  "fourier_time_aggregations": [
-  "daily",
   "monthly"
  ]
 }

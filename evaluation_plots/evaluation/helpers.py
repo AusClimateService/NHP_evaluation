@@ -64,13 +64,13 @@ def create_containing_folder(file):
 def get_variable_longname(var):
     long_names = {
         'rain_day': 'Precipitation',
-        'temp_min_day': 'Daily minimum temperature',
-        'temp_max_day': 'Daily maximum temperature',
+        'temp_min_day': 'Min. temperature',
+        'temp_max_day': 'Max. temperature',
         'solar_exposure_day': 'Solar radiation',
         'wind': 'Wind speed',
         'sm': 'Soil moisture',
-        'etot': 'Actual Evapotranspiration',
-        'e0': 'Potential evapotranspiration',
+        'etot': 'Actual ET',
+        'e0': 'Potential ET',
         'qtot': 'Runoff'}
     
     return(long_names[var])

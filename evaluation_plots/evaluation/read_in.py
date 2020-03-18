@@ -15,7 +15,7 @@ from evaluation.helpers import *
 
 
 # Read in a regional mask and the related metadata file.
-def read_region_mask(region_file, region_var, region_meta_data_file, region_meta_data_id_column, region_meta_data_label_column):
+def read_region_mask(region_file, region_var, region_meta_data_file, region_meta_data_id_column, region_meta_data_label_column, code_column='code'):
     """
     This function reads in a region mask (nc file) with a given variable name for the region IDs (region_var).
     It also reads in a metadata file with an ID column and metadata column and returns both
@@ -33,7 +33,8 @@ def read_region_mask(region_file, region_var, region_meta_data_file, region_meta
     regions = regions[region_var]
 
     # read in region codes
-    region_codes = pd.read_csv(region_meta_data_file)[[region_meta_data_id_column, region_meta_data_label_column]]
+    region_codes = pd.read_csv(region_meta_data_file, keep_default_na=False)
+    region_codes = region_codes[[region_meta_data_id_column, region_meta_data_label_column, code_column]]
     region_codes = region_codes.rename({region_meta_data_id_column:'region_id'}, axis=1)
     region_codes = region_codes.rename({region_meta_data_label_column:'label'}, axis=1)
 
@@ -63,11 +64,12 @@ def read_in_data_for_animations(files, start_date, end_date, var_in_nc):
 
 
 # Function: Read in bias maps as xarray dataset for one GCM and variable.
-def read_in_xarray_data_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name_sim, name_ref, statistic, year_start, year_end, mask=None,
+def read_in_xarray_data_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name_sim, name_ref,
+                                    statistic, year_start, year_end, mask=None,
                                     var_ref=None, var_sim=None, var_ref_in_nc=None, var_sim_in_nc=None,
                                     time_scales = ['annual', 'seasonal', 'monthly'],
-                                    read_in_bias_types=['bias_abs', 'bias_rel'],
-                                    verbose=False):
+                                    read_in_bias_types=['bias_abs', 'bias_rel', 'bias_lag1corr'],
+                                    verbose=True):
 
     """
     This functions reads in the 30-year mean (annual, seasonal and/or monthly) and the bias and returns them
@@ -80,7 +82,7 @@ def read_in_xarray_data_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name
     if var_sim is None: var_sim=var
     if var_ref_in_nc is None: var_ref_in_nc=var_ref
     if var_sim_in_nc is None: var_sim_in_nc=var_sim
-    
+
     # prepare output dictionary of the following shape:
     # datasets[TIMESCALE][NAME_REF/NAME_SIM] # TIMESCALE: annual,seasonal,monthly; # NAME_REF/NAME_SIM: e.g. awap, isimip_NorESM1-M
     # each item is an xarray dataset
@@ -88,7 +90,7 @@ def read_in_xarray_data_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name
     datasets = dict()
     for time_scale in time_scales:
         
-        datasets[time_scale] = dict() # create a new dictionary, for "bias_abs", "bias_rel"
+        datasets[time_scale] = dict() # create a new dictionary, for "bias_abs", "bias_rel", "bias_lag1corr"
         time_scale_str = dict(annual='year', seasonal='seas', monthly='mon')[time_scale]
     
         # read in reference data
@@ -100,11 +102,18 @@ def read_in_xarray_data_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name
             datasets[time_scale][name_ref] = xr.open_dataset(fn).load()
             
             # if time_scale is seasonal or monthly, aggregate data, so that the dimension name changes to
-            # season or month (values will be the same)
+            # season or month instead of dates (values will be the same)
             if time_scale == 'seasonal':
                 datasets[time_scale][name_ref] = datasets[time_scale][name_ref].groupby('time.season').mean(dim='time')
             elif time_scale == 'monthly':
                 datasets[time_scale][name_ref] = datasets[time_scale][name_ref].groupby('time.month').mean(dim='time')
+
+            # read in lag1 correlation (if applicable)
+            fn = os.path.join(data_path_ref, '%s_%s_%s%s_%s_%s_lag1corr.nc' % (name_ref, var_ref, time_scale_str, statistic, year_start, year_end))
+            if os.path.exists(fn):
+                if verbose: print(fn)
+                datasets[time_scale][name_ref + '_lag1corr'] = xr.open_dataset(fn).load()
+
 
         # read in simulation data
         if name_sim is not None:
@@ -121,19 +130,27 @@ def read_in_xarray_data_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name
             elif time_scale == 'monthly':
                 datasets[time_scale][name_sim] = datasets[time_scale][name_sim].groupby('time.month').mean(dim='time')
 
-        # read in absolute and relative bias
+            # read inlag1 correlation (if applicable)
+            fn = os.path.join(data_path_sim, gcm, '%s_%s_%s%s_%s_%s_lag1corr.nc' % (name_sim, var_sim, time_scale_str, statistic, year_start, year_end))
+            if os.path.exists(fn):
+                if verbose: print(fn)
+                datasets[time_scale][name_sim + '_lag1corr'] = xr.open_dataset(fn).load()
+
+        # read in absolute / relative bias or bias in lag1corr
         if read_in_bias_types is not None:
             for bias_type in read_in_bias_types:
                 fn = os.path.join(data_path_sim, gcm, 'bias_%s' % name_ref, '%s_%s_%s%s_%s_%s.nc' % (bias_type, var, time_scale_str, statistic, year_start, year_end))
                 if verbose: print(fn)
                 datasets[time_scale][bias_type] = xr.open_dataset(fn).load()
                 
-                # if time_scale is seasonal or monthly, aggregate data, so that the dimension name changes to
-                # season or month (values will be the same)
-                if time_scale == 'seasonal':
-                    datasets[time_scale][bias_type] = datasets[time_scale][bias_type].groupby('time.season').mean(dim='time')
-                elif time_scale == 'monthly':
-                    datasets[time_scale][bias_type] = datasets[time_scale][bias_type].groupby('time.month').mean(dim='time')
+                if bias_type in ['bias_abs', 'bias_rel']:
+                    # if time_scale is seasonal or monthly, aggregate data, so that the dimension name changes to
+                    # season or month (values will be the same)
+                    # this does not apply to the bias in lag1 correlation, because there is only one bias value
+                    if time_scale == 'seasonal':
+                        datasets[time_scale][bias_type] = datasets[time_scale][bias_type].groupby('time.season').mean(dim='time')
+                    elif time_scale == 'monthly':
+                        datasets[time_scale][bias_type] = datasets[time_scale][bias_type].groupby('time.month').mean(dim='time')
 
     # standardise dimension and variable names and apply AWRA mask
     for key1 in datasets.keys():
@@ -288,6 +305,82 @@ def read_in_timeseries_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name_
         # read in simulation data
         if name_sim is not None:
             fn = os.path.join(data_path_sim, gcm, '%s_%s_%s%s_%s_%s_merged.nc' % (name_sim, var_sim, time_scale_str,
+                                                                              statistic, year_start, year_end))
+            if verbose: print(fn)
+            datasets[time_scale][name_sim] = xr.open_dataset(fn)
+        
+    # standardise dimension and variable names and apply AWRA mask
+    for key1 in datasets.keys():
+        for key2 in datasets[key1].keys():
+            
+            # remove time bnds
+            if 'time_bnds' in datasets[key1][key2].variables:
+                datasets[key1][key2] = datasets[key1][key2].drop('time_bnds')
+            # rename variables
+            datasets[key1][key2] = rename_variable_in_ds(datasets[key1][key2], var_ref_in_nc, var)
+            datasets[key1][key2] = rename_variable_in_ds(datasets[key1][key2], var_sim_in_nc, var)
+            
+            # standardise lat/lon
+            datasets[key1][key2] = standardise_dimension_names(datasets[key1][key2])
+            # round lat/lon
+            datasets[key1][key2] = standardise_latlon(datasets[key1][key2])
+
+            # read in lat / lon coordinate, if applicable
+            if lat is not None and lon is not None:
+                datasets[key1][key2] = datasets[key1][key2].sel(lat=lat, lon=lon, method='nearest')
+            
+            # load data (before mask seems to be faster)
+            if load:
+                datasets[key1][key2] = datasets[key1][key2].load()
+            
+            # apply mask to all data
+            datasets[key1][key2] = apply_mask(datasets[key1][key2], mask)
+    
+    return datasets
+
+
+
+
+
+# Read in time series of monthly, seasonal or annual values to be plotted in time series plots, for one GCM.
+def read_in_mean_field_for_one_gcm(data_path_ref, data_path_sim, gcm, var, name_sim, name_ref, statistic, year_start, year_end, mask=None,
+                                   var_ref=None, var_sim=None, var_ref_in_nc=None, var_sim_in_nc=None, 
+                                   time_scales=['annual', 'seasonal', 'monthly'], load=True,
+                                   verbose=False, lat=None, lon=None):
+    """
+    This functions reads in the monthly, seasonal or annual mean and returns them as xarray datasets to be plotted in time series plots.
+    It reads in the data for one GCM and variable - for both the simulation and reference.
+    """
+    
+    # set default values
+    if var_ref is None: var_ref=var
+    if var_sim is None: var_sim=var
+    if var_ref_in_nc is None: var_ref_in_nc=var_ref
+    if var_sim_in_nc is None: var_sim_in_nc=var_sim
+    
+    # prepare output dictionary of the following shape:
+    # datasets[TIMESCALE][NAME_REF/NAME_SIM] # TIMESCALE: annual,seasonal,monthly; # NAME_REF/NAME_SIM: e.g. awap, isimip_NorESM1-M
+    # each item is an xarray dataset
+
+    datasets = dict()
+    for time_scale in time_scales:
+        datasets[time_scale] = dict()
+    
+    for time_scale in time_scales:
+        
+        time_scale_str = dict(annual='year', seasonal='seas', monthly='mon')[time_scale]
+        
+        # read in reference data
+        if name_ref is not None:
+            fn = os.path.join(data_path_ref, '%s_%s_%s%s_%s_%s_mean.nc' % (name_ref, var_ref, time_scale_str, 
+                                                                              statistic, year_start, year_end))
+            if verbose: print(fn)
+            datasets[time_scale][name_ref] = xr.open_dataset(fn)
+
+
+        # read in simulation data
+        if name_sim is not None:
+            fn = os.path.join(data_path_sim, gcm, '%s_%s_%s%s_%s_%s_mean.nc' % (name_sim, var_sim, time_scale_str,
                                                                               statistic, year_start, year_end))
             if verbose: print(fn)
             datasets[time_scale][name_sim] = xr.open_dataset(fn)
@@ -493,7 +586,7 @@ def prepare_timeseries_for_all_gcms_and_statistics(data_path_ref, data_path_sim,
 def prepare_mean_field_for_all_gcms_and_statistics(data_path_ref, data_path_sim, gcms, var, name_sim_prefix, name_ref, 
                                                    statistics, year_start, year_end, mask=None,
                                                    var_ref=None, var_sim=None, var_ref_in_nc=None, 
-                                                   var_sim_in_nc=None, lat=None, lon=None):
+                                                   var_sim_in_nc=None, lat=None, lon=None, verbose=False):
 
     """
     # This function reads in time series of monthly, seasonal or annual time series to be plotted in time series plots, for all GCMs.
@@ -517,16 +610,16 @@ def prepare_mean_field_for_all_gcms_and_statistics(data_path_ref, data_path_sim,
     for statistic in statistics:
         # First: read in reference (historical AWRA run)
 
-        # read in reference data - annual
-        datasets = read_in_timeseries_for_one_gcm(data_path_ref=data_path_ref, data_path_sim=data_path_sim,
+        # read in reference data - annual, seasonal
+        datasets = read_in_mean_field_for_one_gcm(data_path_ref=data_path_ref, data_path_sim=data_path_sim,
                                                   gcm=None, var=var, name_sim=None,
                                                   name_ref=name_ref, statistic=statistic, year_start=year_start,
                                                   year_end=year_end, mask=mask,
                                                   var_ref=var_ref, var_sim=None, var_ref_in_nc=var_ref_in_nc,
-                                                  var_sim_in_nc=None, read_in_bias_types=None, 
-                                                  time_scales=['annual', 'seasonal'], lat=lat, lon=lon)
+                                                  var_sim_in_nc=None, time_scales=['annual', 'seasonal'],
+                                                  lat=lat, lon=lon, verbose=verbose)
         
-        # calculate the mean for each time step
+        # calculate the mean over time
         temp = datasets['annual'][name_ref].mean(dim='time') # calculate the time mean, for each grid cell
         temp = temp.to_dataframe().reset_index()
         temp['type'] = name_ref
@@ -534,7 +627,7 @@ def prepare_mean_field_for_all_gcms_and_statistics(data_path_ref, data_path_sim,
         temp['statistic'] = statistic
         df = df.append(temp[['type', 'time_scale', 'statistic', 'lat', 'lon', var]])
 
-        # read in reference data - seasonal
+        # calculate the mean over time
         temp = datasets['seasonal'][name_ref].groupby('time.season').mean(dim='time')
         temp = temp.to_dataframe().reset_index()
         temp['type'] = name_ref
@@ -546,15 +639,15 @@ def prepare_mean_field_for_all_gcms_and_statistics(data_path_ref, data_path_sim,
         # loop through gcms and read in data:
         for gcm in gcms:
             name_sim = '%s_%s' % (name_sim_prefix, gcm)
-            datasets = read_in_timeseries_for_one_gcm(data_path_ref=data_path_ref, data_path_sim=data_path_sim,
+            datasets = read_in_mean_field_for_one_gcm(data_path_ref=data_path_ref, data_path_sim=data_path_sim,
                                                   gcm=gcm, var=var, name_sim=name_sim,
                                                   name_ref=None, statistic=statistic, year_start=year_start,
                                                   year_end=year_end, mask=mask,
                                                   var_ref=None, var_sim=var_sim, var_ref_in_nc=None,
-                                                  var_sim_in_nc=var_sim_in_nc, read_in_bias_types=None, 
-                                                  time_scales=['annual', 'seasonal'], lat=lat, lon=lon)
+                                                  var_sim_in_nc=var_sim_in_nc, time_scales=['annual', 'seasonal'],
+                                                  lat=lat, lon=lon, verbose=verbose)
             
-            # calculate the mean for each time step
+            # calculate the mean over time
             temp = datasets['annual'][name_sim].mean(dim='time')
             temp = temp.to_dataframe().reset_index()
             temp['type'] = name_sim
@@ -562,7 +655,7 @@ def prepare_mean_field_for_all_gcms_and_statistics(data_path_ref, data_path_sim,
             temp['statistic'] = statistic
             df = df.append(temp[['type', 'time_scale', 'statistic', 'lat', 'lon', var]])
 
-            # calculate the mean for each time step
+            # calculate the mean over time
             temp = datasets['seasonal'][name_sim].groupby('time.season').mean(dim='time')
             temp = temp.to_dataframe().reset_index()
             temp['type'] = name_sim
@@ -690,8 +783,9 @@ def prepare_daily_timeseries_for_all_gcms(data_path_sim, data_path_ref, gcms, va
     df = pd.DataFrame()
     
     # Read in reference data
+    data_path_ref_temp = data_path_ref.replace('#VAR#', var_ref) # replace VAR placeholder, if applicable    
     years_to_read_in = np.arange(year_start, year_end+1) # can't just merge all files together, because there is an issue with latitudes after 2017
-    files = [glob.glob(os.path.join(data_path_ref, var_ref, '*%s*%s*.nc' % (var_ref, x))) for x in years_to_read_in]
+    files = [glob.glob(os.path.join(data_path_ref_temp, '*%s*%s*.nc' % (var_ref, x))) for x in years_to_read_in]
     temp = xr.open_mfdataset(files)
     
     # Standardise dimension names
@@ -715,7 +809,8 @@ def prepare_daily_timeseries_for_all_gcms(data_path_sim, data_path_ref, gcms, va
     for gcm in gcms:
         
         name_sim = '%s_%s' % (name_sim_prefix, gcm)
-        files = os.path.join(data_path_sim, gcm, 'historical', '*%s*.nc' % (var_sim))
+        data_path_sim_temp = data_path_sim.replace('#GCM#', gcm).replace('#VAR#', var_sim)
+        files = os.path.join(data_path_sim_temp, '*%s*.nc' % (var_sim))
         
         # Open data
         temp = xr.open_mfdataset(files)
