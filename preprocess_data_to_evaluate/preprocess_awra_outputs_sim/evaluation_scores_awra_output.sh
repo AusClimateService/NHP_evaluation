@@ -21,15 +21,18 @@
 # 2) Merge all years together into one file to produce an aggregated time series (e.g. 30 years of monthly maxima).
 # 3) Calculate the overall mean climatology, e.g. the 30-year climatology of monthly maxima.
 # 4) If the statistic is sum or mean, also calculate the lag-1 auto correlation from the 30-years time series.
+# 5) Calculate the biases relative to the reference dataset.
 
 # Author: Elisabeth Vogel, elisabeth.vogel@bom.gov.au
 # Date: 26/03/2019
+
 
 # Set bash script to fail on first error
 set -e
 # Trap each command and log it to output (except ECHO)
 trap '! [[ "$BASH_COMMAND" =~ (echo|for|\[) ]] && \
 cmd=`eval echo "$BASH_COMMAND" 2>/dev/null` && echo [$(date "+%Y%m%d %H:%M:%S")] $cmd' DEBUG
+
 
 # load required netcdf modules
 module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
@@ -39,21 +42,23 @@ module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
 var=$1
 ref_start_year=$2
 ref_end_year=$3
-path_awra_ref=$4 # reference simulation
-out_path_ref=$5
-timescale=$6
-statistic=$7
-name_ref=$8 # name for the historical reference, used to create file names
-temp_path=$9 # path for temporary files (usually the same as the output path, but on scratch)
+path_awra_data=$4 # AWRA data to evaluate
+path_statistics_ref=$5 # output path of the statistics of reference dataset (previously calculated)
+out_path_sim=$6 # output path for the statistics of the dataset to evaluate
+timescale=$7
+statistic=$8
+name_sim=$9 # name for the AWRA data to evaluate, used to create file names
+name_ref=${10} # name for the historical reference, used to create file names
+temp_path=${11} # path for temporary files (usually the same as the output path, but on scratch)
 
-echo '##### Script ran with' ${var} ${ref_start_year} ${ref_end_year} ${path_awra_ref} ${out_path} ${timescale} ${statistic} ${name_ref} ${temp_path}
+echo "##### Script Ran With" ${var} ${ref_start_year} ${ref_end_year} ${path_awra_data} ${path_statistics_ref} ${out_path_sim} ${timescale} ${statistic} ${name_sim} ${name_ref} ${temp_path}
 
 echo '##### Statistic to calculate:' ${timescale} ${statistic}
 
-sim_ref=${name_ref}
-out_path=${out_path_ref}
+sim_ref=${name_sim}
+out_path=${out_path_sim}
 
-# Prepare temp foler
+# Prepare temp folder
 temp_path=${temp_path}/temp_${var}_${timescale}${statistic}_${sim_ref}
 mkdir -p ${temp_path}
 
@@ -80,8 +85,7 @@ else
             echo '##### Statistic file already exists. Skipping' ${fn_year}
         else
             echo '##### Creating statistic file' ${fn_year}
-            
-            input_path=${path_awra_ref}
+            input_path=${path_awra_data}
             input_file=${input_path}/${var}_${year}.nc
             
             ##########################################################
@@ -137,8 +141,8 @@ else
                 fi
             fi
             wait
-            
-            echo ${input_file}
+
+            ##########################################################
             
             # start calculation
             if [ ${statistic:0:4} != 'pctl' ]; then # not a percentile
@@ -153,10 +157,10 @@ else
                 cdo -L ${cdo_fun} ${input_file} -${timescale}min ${input_file} -${timescale}max ${input_file} ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc
             fi # percentile?
             wait
-
+                        
             mv ${temp_path}/${sim_ref}_${var}_${timescale}${statistic}_${year}.nc ${fn_year}
         fi # fn_year exists?
-    done # for eacg year
+    done # for each year
 
     # Merge all years
 
@@ -181,6 +185,7 @@ else
         ncatted -a long_name,'sm',o,c,sm ${fn_merged}
         ncatted -a standard_name,'sm',o,c,sm ${fn_merged}
     fi
+
 fi # fn_merge exists?
 
 # Calculate overall 30-year mean and standard deviation from annual statistics
@@ -199,14 +204,13 @@ else
     cdo_fun=y${timescale}
 fi
 if [ ! -f ${fn_mean} ]; then
-    echo 'Calculate mean over reference period'
     cdo ${cdo_fun}mean ${fn_merged} ${fn_mean}
 fi
 
 if [ ! -f ${fn_std} ]; then
-    echo 'Calculate standard deviation over reference period'
     cdo ${cdo_fun}std ${fn_merged} ${fn_std}
 fi
+wait
 
 
 if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
@@ -227,7 +231,76 @@ if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
 fi
 
 
-# Remove the temporary path
-rm -r ${temp_path}
+# Calculate biases
 
+# create bias path
+bias_path=${out_path_sim}/bias_${name_ref}
+echo "##### Creating output folder for bias data" ${bias_path}
+mkdir -p ${bias_path}
+
+
+# if no simulation or reference dataset was given, skip it
+if [ ${name_ref} != ''  ] & [ ${path_statistics_ref} != '' ]; then
+
+    ref_merged=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
+    ref_mean=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
+    ref_std=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
+    ref_lag1=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_lag1corr.nc
+
+    sim_merged=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
+    sim_mean=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
+    sim_std=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
+    sim_lag1=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_lag1corr.nc
+
+    if [ ! -f ${ref_merged} ]; then
+        echo '##### Reference data not created before. Skip calculating biases.'
+    else
+
+        echo '##### Calculate biases relative to ' ${name_ref}
+
+        echo '##### Regridding all files to ' ${name_ref} ' grid'
+        cdo griddes ${ref_merged} > ${temp_path}/griddes.txt
+        # regridding the merged files
+        cdo remapnn,${temp_path}/griddes.txt ${sim_merged} ${sim_merged%.nc}_remapped.nc
+        mv ${sim_merged%.nc}_remapped.nc ${sim_merged}
+        # regridding the mean
+        cdo remapnn,${temp_path}/griddes.txt ${sim_mean} ${sim_mean%.nc}_remapped.nc
+        mv ${sim_mean%.nc}_remapped.nc ${sim_mean}
+        # regridding the standard deviation file
+        cdo remapnn,${temp_path}/griddes.txt ${sim_std} ${sim_std%.nc}_remapped.nc
+        mv ${sim_std%.nc}_remapped.nc ${sim_std}
+
+        echo '##### Calculate biases'
+        bias_abs=${bias_path}/bias_abs_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+        bias_rel=${bias_path}/bias_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+        bias_std=${bias_path}/bias_std_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+
+        # subtract reference from simulation and then multiply with -1, so that all information from reference is retained (units, long_name etc.)
+        cdo -L mulc,-1 -sub ${ref_mean} ${sim_mean} ${bias_abs}
+        cdo div ${bias_abs} ${ref_mean} ${bias_rel}
+        cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
+        cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
+
+        # regridding the lag1 auto-correlation file, if applicable
+        if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
+            cdo remapnn,${temp_path}/griddes.txt ${sim_lag1} ${sim_lag1%.nc}_remapped.nc
+            mv ${sim_lag1%.nc}_remapped.nc ${sim_lag1}
+
+            bias_lag1=${bias_path}/bias_lag1corr_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+            cdo -L mulc,-1 -sub ${ref_lag1} ${sim_lag1} ${bias_lag1}
+        fi
+
+        sim_mean=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
+        sim_std=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
+        ref_mean=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
+        ref_std=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
+        bias_abs=${bias_path}/bias_abs_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+        bias_rel=${bias_path}/bias_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+        bias_std=${bias_path}/bias_std_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+
+    fi 
+fi
+
+wait
+rm -r ${temp_path}
 echo '##### Completed'
