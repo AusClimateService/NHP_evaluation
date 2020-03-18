@@ -179,18 +179,22 @@ if [ ! -f ${fn_std} ]; then
     cdo ${cdo_fun}std ${fn_merged} ${fn_std}
 fi
 
-# Calculate the lag-1 auto-correlation
-            
-# - only for the mean or sum, not for the percentiles and other statistics
-# Steps:    1) create a temporary dataset where the first time step is removed
-#           2) calculate the correlation between this temporary time series and the original time series (= lag-1 correlation)
-fn_lag_corr=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_lag1corr.nc
 
-if [ ! -f ${fn_lag_corr} ]; then
-    ntimesteps=`cdo ntime ${fn_merged}` # how many time step does the merged file have?
-    cdo delete,timestep=1 ${fn_merged} ${temp_path}/${sim_ref}_shift1.nc
-    cdo delete,timestep=${ntimesteps} ${fn_merged} ${temp_path}/${sim_ref}_shift2.nc # so both have the same length
-    cdo timcor ${temp_path}/${sim_ref}_shift1.nc ${temp_path}/${sim_ref}_shift2.nc ${fn_lag_corr}
+if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
+    echo '##### Calculate the lag-1 auto-correlation'
+    # Calculate the lag-1 auto-correlation
+    # - only for the mean or sum, not for the percentiles and other statistics
+    # Steps:    1) create a temporary dataset where the first time step is removed
+    #           2) calculate the correlation between this temporary time series and the original time series (= lag-1 correlation)
+
+    fn_lag_corr=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_lag1corr.nc
+
+    if [ ! -f ${fn_lag_corr} ]; then
+        ntimesteps=`cdo ntime ${fn_merged}` # how many time step does the merged file have?
+        cdo delete,timestep=1 ${fn_merged} ${temp_path}/${sim_ref}_shift1.nc
+        cdo delete,timestep=${ntimesteps} ${fn_merged} ${temp_path}/${sim_ref}_shift2.nc # so both have the same length
+        cdo timcor ${temp_path}/${sim_ref}_shift1.nc ${temp_path}/${sim_ref}_shift2.nc ${fn_lag_corr}
+    fi
 fi
 
 # Remove the temporary path
