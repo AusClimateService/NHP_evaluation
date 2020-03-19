@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#PBS -q normal
+#PBS -P er4
+#PBS -N xxJOB_NAMExx
+#PBS -l walltime=24:00:00
+#PBS -l ncpus=2
+#PBS -l mem=12gb
+#PBS -l wd
+#PBS -l storage=gdata/er4+scratch/er4
+#PBS -o xxJOB_OUTPUT_FILExx
+#PBS -e xxJOB_ERROR_FILExx
+
+var=xxVARxx
+timescale=xxTIMESCALExx
+statistic=xxSTATISTICxx
+
+ref_start_year="1976"
+ref_end_year="2005"
+path_awra_ref="/g/data/er4/data/SIMULATION_EXPERIMENTS/awral_orv6qes-viney-icc.2018.1.163/sim" # historical reference simulation
+# out_path="/scratch/er4/${USER}/hydro_projections/data/evaluation/ISIMIP_original/awra_outputs/${gcm}" - storage location TBC
+out_path="/g/data/er4/exv563/hydro_projections/data/evaluation/AWRA_v6.1"
+name_ref="awra_v6.1" # name for historical reference, used for file names
+temp_path="/g/data/er4/exv563/hydro_projections/data/evaluation/AWRA_v6.1"
+
+sh evaluation_scores_awra_output_historical_reference.sh ${var} ${ref_start_year} ${ref_end_year} ${path_awra_run} ${path_awra_ref} ${out_path} ${timescale} ${statistic} ${name_sim} ${name_ref} ${temp_path}
