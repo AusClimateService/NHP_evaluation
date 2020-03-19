@@ -3,3 +3,5 @@
 *.pbs
 *.out
 *.error
+*.ipynb_checkpoints*
+*~
