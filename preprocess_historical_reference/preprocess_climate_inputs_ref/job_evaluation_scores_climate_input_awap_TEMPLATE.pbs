@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#PBS -q normal
+#PBS -P er4
+#PBS -N xxJOB_NAMExx
+#PBS -l walltime=24:00:00
+#PBS -l ncpus=2
+#PBS -l mem=xxMEMORYxx
+#PBS -l wd
+#PBS -l storage=gdata/er4+scratch/er4
+#PBS -o xxJOB_OUTPUT_FILExx
+#PBS -e xxJOB_ERROR_FILExx
+
+
+var_ref=xxVARxx
+timescale=xxTIMESCALExx
+statistic=xxSTATISTICxx
+
+
+case ${var_ref} in
+    solar_exposure_day)
+        ref_start_year="1990"
+        ref_end_year="2005"
+        ;;
+    *)
+        ref_start_year="1976"
+        ref_end_year="2005"
+        ;;
+esac
+
+path_climate_ref="/g/data/er4/data/CLIMATE"
+#out_path_ref="/scratch/er4/${USER}/hydro_projections/data/evaluation/AWAP" - storage location TBC
+out_path_ref="/g/data/er4/exv563/hydro_projections/data/evaluation/AWAP"
+name_ref="awap"
+temp_path="/g/data/er4/exv563/hydro_projections/data/evaluation/AWAP"
+
+
+sh evaluation_scores_climate_input_AWAP.sh ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_ref} ${out_path_ref} ${timescale} ${statistic} ${name_ref} ${temp_path}
+
+wait
+

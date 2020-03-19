@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#PBS -q normal
+#PBS -P er4
+#PBS -N xxJOB_NAMExx
+#PBS -l walltime=24:00:00
+#PBS -l ncpus=2
+#PBS -l mem=12gb
+#PBS -l wd
+#PBS -l storage=gdata/er4+scratch/er4+gdata/wj02
+#PBS -o xxJOB_OUTPUT_FILExx
+#PBS -e xxJOB_ERROR_FILExx
+
+var=xxVARxx
+gcm=xxGCMxx
+timescale=xxTIMESCALExx
+statistic=xxSTATISTICxx
+
+ref_start_year="1976"
+ref_end_year="2005"
+path_awra_data="/g/data/er4/exv563/hydro_projections/data/AWRA_simulations_er4/ISIMIP_AWAP/no_spinup/${gcm}/historical"
+# path_statistics_ref="/scratch/er4/${USER}/hydro_projections/data/evaluation/AWAP" - storage location TBC
+path_statistics_ref="/g/data/er4/exv563/hydro_projections/data/evaluation/AWRA_v6.1"
+# out_path="/scratch/er4/${USER}/hydro_projections/data/evaluation/ISIMIP_AWAP/climate_inputs/${gcm}" - storage location TBC
+out_path="/g/data/er4/exv563/hydro_projections/data/evaluation/ISIMIP_AWAP/awra_outputs/${gcm}"
+name_sim="isimip_awap_${gcm}"
+name_ref="awra_v6.1"
+temp_path="/g/data/er4/exv563/hydro_projections/data/evaluation/ISIMIP_AWAP/awra_outputs/${gcm}"
+
+sh evaluation_scores_awra_output.sh ${var} ${ref_start_year} ${ref_end_year} ${path_awra_data} ${path_statistics_ref} ${out_path} ${timescale} ${statistic} ${name_sim} ${name_ref} ${temp_path}
