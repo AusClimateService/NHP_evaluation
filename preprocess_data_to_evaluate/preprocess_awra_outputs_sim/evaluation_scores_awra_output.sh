@@ -35,7 +35,7 @@ cmd=`eval echo "$BASH_COMMAND" 2>/dev/null` && echo [$(date "+%Y%m%d %H:%M:%S")]
 
 
 # load required netcdf modules
-module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
+module load netcdf/4.7.1 cdo/1.9.8 nco/4.9.2
 
 
 # read in variable
@@ -242,14 +242,18 @@ mkdir -p ${bias_path}
 # if no simulation or reference dataset was given, skip it
 if [ ${name_ref} != ''  ] & [ ${path_statistics_ref} != '' ]; then
 
-    ref_merged=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
-    ref_mean=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
-    ref_std=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
-    ref_lag1=${out_path_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_lag1corr.nc
+    ref_merged=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
+    ref_mean=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
+    ref_std=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
+    ref_trend_abs=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_abs.nc
+    ref_trend_rel=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_rel.nc
+    ref_lag1=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_lag1corr.nc
 
     sim_merged=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_merged.nc
     sim_mean=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
     sim_std=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
+    sim_trend_abs=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_abs.nc
+    sim_trend_rel=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_rel.nc
     sim_lag1=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_lag1corr.nc
 
     if [ ! -f ${ref_merged} ]; then
@@ -269,17 +273,26 @@ if [ ${name_ref} != ''  ] & [ ${path_statistics_ref} != '' ]; then
         # regridding the standard deviation file
         cdo remapnn,${temp_path}/griddes.txt ${sim_std} ${sim_std%.nc}_remapped.nc
         mv ${sim_std%.nc}_remapped.nc ${sim_std}
+        # regridding the trend files
+        cdo remapnn,${temp_path}/griddes.txt ${sim_trend_abs} ${sim_trend_abs%.nc}_remapped.nc
+        mv ${sim_trend_abs%.nc}_remapped.nc ${sim_trend_abs}
+        cdo remapnn,${temp_path}/griddes.txt ${sim_trend_rel} ${sim_trend_rel%.nc}_remapped.nc
+        mv ${sim_trend_rel%.nc}_remapped.nc ${sim_trend_rel}
 
         echo '##### Calculate biases'
         bias_abs=${bias_path}/bias_abs_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
         bias_rel=${bias_path}/bias_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
         bias_std=${bias_path}/bias_std_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+        bias_trend_abs=${bias_path}/bias_trend_abs_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
+        bias_trend_rel=${bias_path}/bias_trend_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
 
         # subtract reference from simulation and then multiply with -1, so that all information from reference is retained (units, long_name etc.)
         cdo -L mulc,-1 -sub ${ref_mean} ${sim_mean} ${bias_abs}
         cdo div ${bias_abs} ${ref_mean} ${bias_rel}
         cdo -L mulc,-1 -sub ${ref_std} ${sim_std} ${temp_path}/bias_std.nc
         cdo div ${temp_path}/bias_std.nc ${ref_std} ${bias_std}
+        cdo -L mulc,-1 -sub ${ref_trend_abs} ${sim_trend_abs} ${bias_trend_abs}
+        cdo -L mulc,-1 -sub ${ref_trend_rel} ${sim_trend_rel} ${bias_trend_rel}
 
         # regridding the lag1 auto-correlation file, if applicable
         if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
@@ -289,14 +302,6 @@ if [ ${name_ref} != ''  ] & [ ${path_statistics_ref} != '' ]; then
             bias_lag1=${bias_path}/bias_lag1corr_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
             cdo -L mulc,-1 -sub ${ref_lag1} ${sim_lag1} ${bias_lag1}
         fi
-
-        sim_mean=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
-        sim_std=${out_path_sim}/${name_sim}_${var_sim}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
-        ref_mean=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_mean.nc
-        ref_std=${path_statistics_ref}/${name_ref}_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_std.nc
-        bias_abs=${bias_path}/bias_abs_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
-        bias_rel=${bias_path}/bias_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
-        bias_std=${bias_path}/bias_std_rel_${var_ref}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}.nc
 
     fi 
 fi
