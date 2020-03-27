@@ -32,7 +32,7 @@ trap '! [[ "$BASH_COMMAND" =~ (echo|for|\[) ]] && \
 cmd=`eval echo "$BASH_COMMAND" 2>/dev/null` && echo [$(date "+%Y%m%d %H:%M:%S")] $cmd' DEBUG
 
 # load required netcdf modules
-module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
+module load netcdf/4.7.1 cdo/1.9.8 nco/4.9.2
 
 
 # read in variable
@@ -208,7 +208,41 @@ if [ ! -f ${fn_std} ]; then
     cdo ${cdo_fun}std ${fn_merged} ${fn_std}
 fi
 
+# Calculate the 30-year trend
+# - for annual: calculate overall mean from annual data: timmean
+# - for seasonal, monthly: calculate mean for each season/month: yseasmean, ymonmean
 
+# Prepare file names
+fn_trend_abs=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_abs.nc
+fn_trend_rel=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_rel.nc
+
+# Calculate the absolute and relative trend over the period
+echo '##### Calculate the absolute and relative trend over the period'
+if [ ! -f ${fn_trend_abs} ]; then
+    if [ ${timescale} == 'year' ]; then
+        cdo trend ${fn_merged} ${temp_path}/intercept.nc ${fn_trend_abs}
+    elif [ ${timescale} == 'seas' ]; then
+        ntimesteps=`cdo ntime ${fn_merged}` # how many time step does the merged file have?
+        for season in {1..4}; do
+            # select all seasons X in the merged file
+            cdo seltimestep,${season}/${ntimesteps}/4 ${fn_merged} ${temp_path}/season_${season}_merged.nc
+            cdo trend ${temp_path}/season_${season}_merged.nc ${temp_path}/intercept.nc ${temp_path}/trend_season_${season}.nc
+        done
+        cdo mergetime ${temp_path}/trend_season_{1..4}.nc ${fn_trend_abs}
+    elif [ ${timescale} == 'mon' ]; then
+        ntimesteps=`cdo ntime ${fn_merged}` # how many time step does the merged file have?
+        for month in {1..12}; do
+            # select all months X in the merged file
+            cdo seltimestep,${month}/${ntimesteps}/4 ${fn_merged} ${temp_path}/month_${month}_merged.nc
+            cdo trend ${temp_path}/month_${month}_merged.nc ${temp_path}/intercept.nc ${temp_path}/trend_month_${month}.nc
+        done
+        cdo mergetime ${temp_path}/trend_month_{1..12}.nc ${fn_trend_abs}
+    fi
+
+# Calculate the relative (divided by the mean)
+cdo div ${fn_trend_abs} ${fn_mean} ${fn_trend_rel}
+fi
+    
 if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
     echo '##### Calculate the lag-1 auto-correlation'
     # Calculate the lag-1 auto-correlation
@@ -225,7 +259,6 @@ if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
         cdo timcor ${temp_path}/${sim_ref}_shift1.nc ${temp_path}/${sim_ref}_shift2.nc ${fn_lag_corr}
     fi
 fi
-
 
 # Remove the temporary path
 rm -r ${temp_path}

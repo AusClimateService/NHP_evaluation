@@ -20,7 +20,8 @@
 # 1) Calculate the statistics (e.g. monthly maxima) for each year separately.
 # 2) Merge all years together into one file to produce an aggregated time series (e.g. 30 years of monthly maxima).
 # 3) Calculate the overall mean climatology, e.g. the 30-year climatology of monthly maxima.
-# 4) If the statistic is sum or mean, also calculate the lag-1 auto correlation from the 30-years time series.
+# 4) Calculate the trend in the statistic (e.g. 30-trend in monthly or annual mean).
+# 5) If the statistic is sum or mean, also calculate the lag-1 auto correlation from the 30-years time series.
 
 # Author: Elisabeth Vogel, elisabeth.vogel@bom.gov.au
 # Date: 26/03/2019
@@ -33,7 +34,7 @@ cmd=`eval echo "$BASH_COMMAND" 2>/dev/null` && echo [$(date "+%Y%m%d %H:%M:%S")]
 
 
 # Load required netcdf modules
-module load netcdf/4.7.1 cdo/1.7.2 nco/4.7.7
+module load netcdf/4.7.1 cdo/1.9.8 nco/4.9.2
 
 
 # Read in variables
@@ -45,7 +46,7 @@ out_path_ref=$5
 timescale=$6
 statistic=$7
 name_ref=$8 # name for the historical reference, used to create file names
-temp_path=$9 # path for temporary files (usually the same as the output path, but on scratch)
+temp_path_ref=$9 # path for temporary files (usually the same as the output path, but on scratch)
 
 echo "##### Script Ran With" ${var_ref} ${ref_start_year} ${ref_end_year} ${path_climate_ref} ${out_path_ref} ${timescale} ${statistic} ${name_ref} ${temp_path}
 
@@ -56,7 +57,7 @@ var=${var_ref}
 out_path=${out_path_ref}
 
 # Prepare temp folder
-temp_path=${temp_path}/temp_${var}_${timescale}${statistic}_${sim_ref}
+temp_path=${temp_path_ref}/temp_${var}_${timescale}${statistic}_${sim_ref}
 mkdir -p ${temp_path}
 
 
@@ -70,7 +71,7 @@ else
     # Prepare paths for annual statistics - helps to restart a script if only one year
     # failed writing out properly. The annual files can be deleted manually, when they are not 
     # needed anymore.
-    statistics_path=${out_path}/annual_statistics
+    statistics_path=${temp_path_ref}/annual_statistics
     mkdir -p ${statistics_path}
 
     # Calculate statistic for each year separately (less memory use)
@@ -180,6 +181,41 @@ if [ ! -f ${fn_std} ]; then
 fi
 
 
+# Calculate the 30-year trend
+# - for annual: calculate overall mean from annual data: timmean
+# - for seasonal, monthly: calculate mean for each season/month: yseasmean, ymonmean
+
+# Prepare file names
+fn_trend_abs=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_abs.nc
+fn_trend_rel=${out_path}/${sim_ref}_${var}_${timescale}${statistic}_${ref_start_year}_${ref_end_year}_trend_rel.nc
+
+# Calculate the absolute and relative trend over the period
+echo '##### Calculate the absolute and relative trend over the period'
+if [ ! -f ${fn_trend_abs} ]; then
+    if [ ${timescale} == 'year' ]; then
+        cdo trend ${fn_merged} ${temp_path}/intercept.nc ${fn_trend_abs}
+    elif [ ${timescale} == 'seas' ]; then
+        ntimesteps=`cdo ntime ${fn_merged}` # how many time step does the merged file have?
+        for season in {1..4}; do
+            # select all seasons X in the merged file
+            cdo seltimestep,${season}/${ntimesteps}/4 ${fn_merged} ${temp_path}/season_${season}_merged.nc
+            cdo trend ${temp_path}/season_${season}_merged.nc ${temp_path}/intercept.nc ${temp_path}/trend_season_${season}.nc
+        done
+        cdo mergetime ${temp_path}/trend_season_{1..4}.nc ${fn_trend_abs}
+    elif [ ${timescale} == 'mon' ]; then
+        ntimesteps=`cdo ntime ${fn_merged}` # how many time step does the merged file have?
+        for month in {1..12}; do
+            # select all months X in the merged file
+            cdo seltimestep,${month}/${ntimesteps}/4 ${fn_merged} ${temp_path}/month_${month}_merged.nc
+            cdo trend ${temp_path}/month_${month}_merged.nc ${temp_path}/intercept.nc ${temp_path}/trend_month_${month}.nc
+        done
+        cdo mergetime ${temp_path}/trend_month_{1..12}.nc ${fn_trend_abs}
+    fi
+
+# Calculate the relative (divided by the mean)
+cdo div ${fn_trend_abs} ${fn_mean} ${fn_trend_rel}
+fi
+    
 if [ ${statistic} == 'mean' ] | [ ${statistic} == 'sum' ]; then
     echo '##### Calculate the lag-1 auto-correlation'
     # Calculate the lag-1 auto-correlation
