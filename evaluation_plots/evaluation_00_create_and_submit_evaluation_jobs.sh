@@ -54,53 +54,59 @@ create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 3
 cpus=4
-memory=8gb
-python_script='evaluation_02_climatologies.py'
+memory=16gb
+python_script='evaluation_01c_bias_trend.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 4
 cpus=4
-memory=32gb
-python_script='evaluation_03a_PDFs_spatial_variability.py'
+memory=8gb
+python_script='evaluation_02_climatologies.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 5
 cpus=4
 memory=32gb
-python_script='evaluation_03b_CDFs_spatial_variability.py'
+python_script='evaluation_03a_PDFs_spatial_variability.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
 # 6
+cpus=4
+memory=32gb
+python_script='evaluation_03b_CDFs_spatial_variability.py'
+create_job_and_submit "${python_script}" ${cpus} ${memory}
+
+# 7
 cpus=4
 memory=16gb
 python_script='evaluation_04_spatial_correlation.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
-# 7
+# 8
 cpus=4
 memory=8gb
 python_script='evaluation_05a_PDFs_temporal_variability.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
-# 8
+# 9
 cpus=4
 memory=8gb
 python_script='evaluation_05b_CDFs_temporal_variability.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
-# 9
+# 10
 cpus=4
 memory=8gb
 python_script='evaluation_06a_point_PDFs.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
-# 10
+# 11
 cpus=4
 memory=8gb
 python_script='evaluation_06b_point_CDFs.py'
 create_job_and_submit "${python_script}" ${cpus} ${memory}
 
-# 11
+# 12
 cpus=4
 memory=8gb
 python_script='evaluation_07_point_Fourier_diagrams.py'

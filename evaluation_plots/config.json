@@ -5,6 +5,8 @@
  "plot_path": "/g/data/er4/exv563/hydro_projections/plots/data_evaluation/ISIMIP_AWAP/climate_inputs",
  "evaluation_year_start": 1976,
  "evaluation_year_end": 2005,
+ "trend_year_start": 1960,
+ "trend_year_end": 2005,
  "name_ref": "awap",
  "name_sim_prefix": "isimip",
  "gcms": [
