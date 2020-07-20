@@ -1,0 +1,19 @@
+---
+# Conda environment file for Evaluation scripts.
+# This envrironment is used for:
+#  - local development
+#  - HPC deployment
+name: evaluation
+channels:
+  - conda-forge
+  - anaconda
+dependencies:
+  - python=3.6
+  - numpy
+  - xarray
+  - pandas
+  - matplotlib
+  - basemap
+  - seaborn
+  - plotnine
+  - cartopy
